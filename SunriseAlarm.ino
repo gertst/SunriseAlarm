@@ -43,8 +43,8 @@ static const uint8_t D10 = 1; */
 DotMatrix dotMatrix(MAX_DEVICES, HARDWARE_TYPE, CLK_PIN, DATA_PIN, CS_PIN);
 RotaryButton rotaryButton(ENCODER_A_PIN, ENCODER_B_PIN, SWITCH_PIN);
 
-uint8_t rotaryPosition = 0;
-uint8_t lastRotaryPosition = 0;
+int rotaryPosition = 0;
+int lastRotaryPosition = 0;
 
 
 void setup() {

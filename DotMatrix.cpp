@@ -4,7 +4,7 @@
 #include <MD_Parola.h>  // Parola library to scroll and display text on the display (needs MD_MAX72xx library)  https://github.com/MajicDesigns/MD_Parola
 #include <MD_MAX72xx.h> // Library to control the Maxim MAX7219 chip on the dot matrix module   https://github.com/MajicDesigns/MD_MAX72XX
 
-const int FRAME_DELAY = 25;
+const int FRAME_DELAY = 20;
 
 void DotMatrix::setup()
 {
@@ -17,7 +17,7 @@ void DotMatrix::setup()
   _parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
   _parola.setTextAlignment(PA_CENTER);
   _parola.setSpeed(FRAME_DELAY);
-  _parola.setPause(0); //how long to pause the animation between the in and out text effect
+  _parola.setPause(FRAME_DELAY); //how long to pause the animation between the in and out text effect
 }
 
 void DotMatrix::loop()
@@ -37,10 +37,12 @@ void DotMatrix::loop()
       //uint8_t textLength = (++textLength) % ARRAY_SIZE(_newText);
       // _parola.displayText(_newText.c_str(), PA_CENTER, FRAME_DELAY, 2000, PA_SCROLL_LEFT, PA_OPENING_CURSOR);
       _parola.setTextBuffer(_newText.c_str());
-     // _parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
+      _parola.setTextEffect(PA_SCROLL_DOWN, PA_NO_EFFECT); //in and out effect
       _newMessageAvailable = false;
+      _parola.displayReset();  
+    } else {
+      _parola.setTextEffect(PA_PRINT, PA_NO_EFFECT);
     }
-    _parola.displayReset();
   }
 
 
