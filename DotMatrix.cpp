@@ -12,23 +12,51 @@ void DotMatrix::setup()
   //Serial.println("DotMatrix::setup");
   _parola.displayClear();
   _parola.displaySuspend(false);
-  byte i = 15;                                            //EEPROM.read(0);
+  byte i = 0;                                            //EEPROM.read(0);
   _parola.setIntensity(i);                               // Values from 0 to 15
-  _parola.setTextEffect(PA_SCROLL_LEFT, PA_SCROLL_DOWN); //in and out effect
-  //_parola.displayScroll("Hallokes ...", PA_LEFT, PA_SCROLL_LEFT, FRAME_DELAY);
-  //_parola.displayText("Hallo!", PA_CENTER, FRAME_DELAY, 1000, PA_SCROLL_LEFT, PA_CLOSING_CURSOR);
+  _parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
+  _parola.setTextAlignment(PA_CENTER);
+  _parola.setSpeed(FRAME_DELAY);
+  _parola.setPause(0); //how long to pause the animation between the in and out text effect
 }
 
 void DotMatrix::loop()
 {
-  if (_parola.displayAnimate()) {
+  // animates and returns true when an animation is completed
+  // if (_parola.displayAnimate()) {
+  //   _parola.displayReset();
+  //   //_parola.displaySuspend(true);
+  // }
+
+  if (_parola.displayAnimate()) // animates and returns true when an animation is completed
+  {
+    if (_newMessageAvailable)
+    {
+      Serial.print("new text: ");
+      Serial.println(_newText);
+      //uint8_t textLength = (++textLength) % ARRAY_SIZE(_newText);
+      // _parola.displayText(_newText.c_str(), PA_CENTER, FRAME_DELAY, 2000, PA_SCROLL_LEFT, PA_OPENING_CURSOR);
+      _parola.setTextBuffer(_newText.c_str());
+     // _parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
+      _newMessageAvailable = false;
+    }
     _parola.displayReset();
   }
+
+
+
 }
 
-void DotMatrix::showText(char *text) {
-  char *stringBuffer[] = {text};
-  uint8_t textLength = (++textLength) % ARRAY_SIZE(stringBuffer);
-  _parola.displayScroll(stringBuffer[textLength], PA_CENTER, PA_CLOSING_CURSOR, FRAME_DELAY);
+void DotMatrix::showText(String text) {
+  // char *stringBuffer[] = {text};
+  // // uint8_t textLength = (++textLength) % ARRAY_SIZE(stringBuffer);
+  // //_parola.displayScroll(stringBuffer[textLength], PA_CENTER, PA_CLOSING_CURSOR, FRAME_DELAY);
+  // uint8_t textLength = (++textLength) % ARRAY_SIZE(text);
+  // _newText = text[textLength];
+  // strcpy(*_newText, text);
+  _newText = text;
+  _newMessageAvailable = true;
+  // _parola.setTextBuffer(text);
+  // _parola.displayReset();
   //_parola.displayText(text, PA_CENTER, FRAME_DELAY, 2000, PA_SCROLL_LEFT, PA_OPENING_CURSOR);
 }

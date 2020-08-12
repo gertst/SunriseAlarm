@@ -13,10 +13,12 @@ class DotMatrix
 
     void setup();
     void loop();
-    void showText(char *text);
+    void showText(String Text);
   
   private:
     MD_Parola _parola;
+    bool _newMessageAvailable = false;
+    String _newText;
 };
 
 #endif

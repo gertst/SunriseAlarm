@@ -61,12 +61,7 @@ void loop() {
   dotMatrix.loop();
   rotaryPosition = rotaryButton.loop();
   if (lastRotaryPosition != rotaryPosition) {
-    char *stringBuffer[] = {""};
-    sprintf(*stringBuffer, "Rot: %d", rotaryPosition);
-    uint8_t textLength = (++textLength) % ARRAY_SIZE(stringBuffer);
-    //Serial.println(stringBuffer[textLength]);
-    dotMatrix.showText(stringBuffer[textLength]);
-
+    dotMatrix.showText(String(rotaryPosition));
     lastRotaryPosition = rotaryPosition;
   }
   
