@@ -8,7 +8,7 @@ class DotMatrix
 {
   public:
     DotMatrix(uint8_t maxDevices, MD_MAX72XX::moduleType_t hardwareType, uint8_t clkPin, uint8_t dataPin, uint8_t csPin) 
-    : _parola(hardwareType, csPin, maxDevices)
+    : parola(hardwareType, csPin, maxDevices)
     {};
 
     void setup();
@@ -16,9 +16,9 @@ class DotMatrix
     void showText(String Text);
   
   private:
-    MD_Parola _parola;
-    bool _newMessageAvailable = false;
-    String _newText;
+    MD_Parola parola;
+    bool newMessageAvailable = false;
+    String newText;
 };
 
 #endif

@@ -6,19 +6,19 @@
 class RotaryButton
 {
   public:
-    RotaryButton(uint8_t encoderAPin, uint8_t encoderBPin, uint8_t switchPin);
+    RotaryButton(uint8_t encoderAPin_, uint8_t encoderBPin_, uint8_t switchPin_);
 
     void setup();
     int loop();
   
   private:
-    uint8_t _encoderAPin;
-    uint8_t _encoderBPin;
-    uint8_t _switchPin;
-    uint8_t _valueA;
-    uint8_t _valueALast;
-    int _encoderPosCount;
-    boolean _isClockWise;
+    uint8_t encoderAPin;
+    uint8_t encoderBPin;
+    uint8_t switchPin;
+    uint8_t valueA;
+    uint8_t valueALast;
+    int encoderPosCount;
+    boolean isClockWise;
 };
 
 #endif
