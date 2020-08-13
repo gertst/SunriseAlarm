@@ -38,6 +38,8 @@ static const uint8_t D10 = 1; */
 #define ENCODER_B_PIN   4  //D2
 #define SWITCH_PIN      0  //D3
 
+#define LDR_PIN      A0  //LDR: Light Dependent Resistor 
+
 const char *ssid     = "telenet-Gert";
 const char *password = "gertstogo1627";
 
@@ -54,8 +56,9 @@ int lastRotaryPosition = 0;
 SimpleTimer timer;
 
 void eachSecond() {
-  Serial.println("second");
   dotMatrix.showText(displayTime.getTime());
+  Serial.print("LDR: ");
+  Serial.println(analogRead(LDR_PIN)); //0 - 1023
 }
 
 void setup() {
