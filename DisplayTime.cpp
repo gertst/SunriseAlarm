@@ -42,11 +42,11 @@ void DisplayTime::loop() {
 
 
 
-String DisplayTime::getTime(bool showDot)
+String DisplayTime::getTime()
 {
     
     String time = String(ntp.hours());
-    if (showDot) {
+    if (ntp.seconds() % 2) {
         time = time + ":" ;
     } else {
         time = time + " " ;

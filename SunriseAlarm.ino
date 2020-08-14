@@ -48,15 +48,14 @@ int rotaryPosition = 0;
 int lastRotaryPosition = 0;
 SimpleTimer timerEachSecond;
 SimpleTimer timerEachMinute;
-bool showDot = true;
 
 
 
 void eachSecond() {
-  showDot = !showDot;
   //only show time if the time is initialized
-  if (displayTime.isRunning()) {
-    dotMatrix.showText(displayTime.getTime(showDot));
+  String time = displayTime.getTime();
+  if (time == ) {
+    dotMatrix.showText();
   } else {
     dotMatrix.showText("Time ...");
   }

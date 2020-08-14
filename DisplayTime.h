@@ -7,7 +7,7 @@ class DisplayTime
 {
   public:
     void setup();
-    String getTime(bool showDot);
+    String getTime();
     bool isRunning();
     void loop();
   
