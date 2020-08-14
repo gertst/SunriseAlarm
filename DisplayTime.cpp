@@ -1,32 +1,64 @@
 #include "DisplayTime.h"
 #include "Arduino.h"
 
+#include <ESP8266WiFi.h> 
 #include <WiFiUdp.h>
-#include <NTPClient.h>
+#include <NTP.h> //https://github.com/sstaub/NTP
 
-WiFiUDP ntpUDP;
-NTPClient timeClient(ntpUDP, 12 * 60 * 60 * 1000); //update each 12 hours
 
-void DisplayTime::setup()
-{
-    //timeClient(ntpUDP);
-    timeClient.setTimeOffset(2 * 3600); // add 2 hrs
-    timeClient.begin();
+WiFiUDP wifiUdp;
+NTP ntp(wifiUdp);
+
+bool wifiOK = false;
+
+void pollForWifi() {
+  Serial.print("wifi status:");
+  Serial.println(WiFi.status());
+  
+
 }
 
-String DisplayTime::getTime()
+
+void DisplayTime::setup() {
+    
+}
+
+void DisplayTime::loop() {
+
+    if (!wifiOK && WiFi.status() == WL_CONNECTED) {
+      wifiOK = true;
+      //define the start of summertime for Central Europe
+      ntp.ruleDST("CEST", Last, Sun, Mar, 2, 120); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
+      ntp.updateInterval(60 * 60 * 1000); //each hour
+      ntp.begin();
+      Serial.println("NTP init");
+    }
+    
+    ntp.update();
+
+    //return wifiOK && ntpOK;
+
+}
+
+
+
+String DisplayTime::getTime(bool showDot)
 {
-    timeClient.update();
-    String time = String(timeClient.getHours());
-    time = time + ":" ;
-    if (timeClient.getMinutes() < 10) {
+    
+    String time = String(ntp.hours());
+    if (showDot) {
+        time = time + ":" ;
+    } else {
+        time = time + " " ;
+    }
+    if (ntp.minutes() < 10) {
         time = time + "0";
     }
-    time = time + String(timeClient.getMinutes());
+    time = time + String(ntp.minutes());
     return time;
 }
 
 bool DisplayTime::isRunning() {
     //Serial.println(timeClient.getHours());
-    return timeClient.getHours() > 0;
+    return ntp.year() > 0;
 }

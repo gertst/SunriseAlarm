@@ -1,20 +1,20 @@
 #include "RotaryButton.h"
 #include "Arduino.h"
 
+
 RotaryButton::RotaryButton(uint8_t encoderAPin_, uint8_t encoderBPin_, uint8_t switchPin_) {
     encoderAPin = encoderAPin_;
     encoderBPin = encoderBPin_;
     switchPin = switchPin_;
+    
     pinMode (encoderAPin, INPUT);
     pinMode (encoderBPin, INPUT);
-    valueALast = digitalRead(encoderAPin_);
+    pinMode (switchPin, INPUT);
+    valueALast = digitalRead(encoderAPin);
     encoderPosCount = 0;
-    // Serial.println("RotaryButton instanciated");
-    // Serial.print("RotaryButton _valueALast");
-    // Serial.println(_valueALast);
 }
 
-int RotaryButton::loop()
+int RotaryButton::getPosition()
 {
     valueA = digitalRead(encoderAPin);
     if (valueA != valueALast){ // Means the knob is rotating
@@ -33,4 +33,19 @@ int RotaryButton::loop()
     }
     valueALast = valueA;
     return roundf(encoderPosCount / 2); // we divide by 2 because stepper has an inbetween step that is not required
+}
+
+boolean RotaryButton::getIsButtonPressed() {
+    int switchValue = digitalRead(switchPin);
+    // Serial.print("sw:");
+    // Serial.println(switchValue);
+    if (!isButtonPressed && switchValue == LOW) {
+        isButtonPressed = true;
+        return true;
+    } else {
+        if (switchValue == HIGH) {
+            isButtonPressed = false;
+        }
+        return false;
+    }
 }

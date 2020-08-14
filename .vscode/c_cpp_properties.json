@@ -4,10 +4,10 @@
             "name": "Mac",
             "includePath": [
                 "/Users/Gert/Library/Arduino15/packages/esp8266/tools/**",
+                "/Users/Gert/Library/Arduino15/staging/**",
                 "/Users/Gert/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.2/**",
-                "${workspaceFolder}/**",
                 "/Users/Gert/Documents/Arduino/libraries/**",
-                "/Users/Gert/Library/Arduino15/staging/**"
+                "${workspaceFolder}/**"
             ],
             "defines": [],
             "macFrameworkPath": [

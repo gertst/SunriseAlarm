@@ -2,21 +2,17 @@
 #define DisplayTime_h
 
 #include "Arduino.h"
-#include <NTPClient.h>
-#include <WiFiUdp.h>
 
 class DisplayTime
 {
   public:
-    DisplayTime(){};
-
     void setup();
-    String getTime();
+    String getTime(bool showDot);
     bool isRunning();
+    void loop();
   
-  private:
-    // WiFiUDP ntpUDP;
-    // NTPClient timeClient = (WiFiUDP){};
+  //private:
+    
 };
 
 #endif

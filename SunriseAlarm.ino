@@ -1,15 +1,7 @@
 #include "Arduino.h"
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
-#include <SPI.h>              // Library for hardware or software driven SPI
-#include <NTPClient.h>        //set date and time from NTP - https://github.com/arduino-libraries/NTPClient
-#include <WiFiUdp.h>
 #include <SimpleTimer.h>
 
-//#include <ArduinoOTA.h>       // Library for uploading sketch over the air (OTA)
-//#include <EEPROM.h>           // Library for handle the EEPROM (on device memory, even stored when current is off)
-//#include <DNSServer.h>        // used in AP mode (config mode) to connect direct to the web page 
-//#include <ESP8266WebServer.h> // used in AP mode (config mode)
-//#include <WiFiManager.h>    
 
 #include "DotMatix.h"
 #include "RotaryButton.h"
@@ -38,7 +30,7 @@ static const uint8_t D10 = 1; */
 #define ENCODER_B_PIN   4  //D2
 #define SWITCH_PIN      0  //D3
 
-#define LDR_PIN      A0  //LDR: Light Dependent Resistor 
+#define LDR_PIN      17 //A0  //LDR: Light Dependent Resistor 
 
 const char *ssid     = "telenet-Gert";
 const char *password = "gertstogo1627";
@@ -47,18 +39,37 @@ const char *password = "gertstogo1627";
 #define MAX_DEVICES 4
 #define HARDWARE_TYPE MD_MAX72XX::DR1CR0RR0_HW
 
+
 DotMatrix dotMatrix(MAX_DEVICES, HARDWARE_TYPE, CLK_PIN, DATA_PIN, CS_PIN);
 RotaryButton rotaryButton(ENCODER_A_PIN, ENCODER_B_PIN, SWITCH_PIN);
 DisplayTime displayTime;
 
 int rotaryPosition = 0;
 int lastRotaryPosition = 0;
-SimpleTimer timer;
+SimpleTimer timerEachSecond;
+SimpleTimer timerEachMinute;
+bool showDot = true;
+
+
 
 void eachSecond() {
-  dotMatrix.showText(displayTime.getTime());
-  Serial.print("LDR: ");
-  Serial.println(analogRead(LDR_PIN)); //0 - 1023
+  showDot = !showDot;
+  //only show time if the time is initialized
+  if (displayTime.isRunning()) {
+    dotMatrix.showText(displayTime.getTime(showDot));
+  } else {
+    dotMatrix.showText("Time ...");
+  }
+
+  int ldrValue = analogRead(LDR_PIN); //0 - 1023
+  uint8_t intensity = map(ldrValue, 0, 1023, 6, 0);
+  dotMatrix.setIntensity(intensity); //0 - 15
+  // Serial.print("LDR: intensity: ");
+  // Serial.println(intensity); 
+}
+
+void eachMinute() {
+
 }
 
 void setup() {
@@ -69,19 +80,28 @@ void setup() {
   dotMatrix.showText("Wifi...");
 
   WiFi.begin(ssid, password);
+  
   displayTime.setup();
 
-  timer.setInterval(1000, eachSecond);
+  timerEachSecond.setInterval(1000, eachSecond);
+  timerEachMinute.setInterval(60 * 1000, eachMinute);
 
 }
 
 void loop() {
   //ArduinoOTA.handle();
   dotMatrix.loop();
+  displayTime.loop();
   
-  timer.run();
+  timerEachSecond.run();
+  timerEachMinute.run();
 
-  rotaryPosition = rotaryButton.loop();
+  if (rotaryButton.getIsButtonPressed()) {
+    //Serial.println("pressed");
+    dotMatrix.showText("Press!");
+  }
+
+  rotaryPosition = rotaryButton.getPosition();
   if (lastRotaryPosition != rotaryPosition) {
     dotMatrix.showText(String(rotaryPosition));
     lastRotaryPosition = rotaryPosition;

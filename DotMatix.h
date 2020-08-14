@@ -1,8 +1,7 @@
 #ifndef DotMatrix_h
 #define DotMatrix_h
 
-#include <MD_MAX72xx.h> 
-#include <MD_Parola.h> 
+#include <MD_Parola.h>
 
 class DotMatrix
 {
@@ -14,6 +13,7 @@ class DotMatrix
     void setup();
     void loop();
     void showText(String Text);
+    void setIntensity(uint8_t intensity);
   
   private:
     MD_Parola parola;

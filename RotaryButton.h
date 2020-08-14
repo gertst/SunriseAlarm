@@ -9,7 +9,8 @@ class RotaryButton
     RotaryButton(uint8_t encoderAPin_, uint8_t encoderBPin_, uint8_t switchPin_);
 
     void setup();
-    int loop();
+    int getPosition();
+    boolean getIsButtonPressed();
   
   private:
     uint8_t encoderAPin;
@@ -19,6 +20,7 @@ class RotaryButton
     uint8_t valueALast;
     int encoderPosCount;
     boolean isClockWise;
+    boolean isButtonPressed = false;
 };
 
 #endif
