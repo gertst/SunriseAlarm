@@ -14,8 +14,6 @@ bool wifiOK = false;
 void pollForWifi() {
   Serial.print("wifi status:");
   Serial.println(WiFi.status());
-  
-
 }
 
 
@@ -28,11 +26,13 @@ void DisplayTime::loop() {
     if (!wifiOK && WiFi.status() == WL_CONNECTED) {
       wifiOK = true;
       //define the start of summertime for Central Europe
-      ntp.ruleDST("CEST", Last, Sun, Mar, 2, 120); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
+      ntp.ruleDST("CEST", Last, Sun, Mar, 2, 2 * 60); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
+      //define the standard time for Central Europe
+      ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
       ntp.updateInterval(60 * 60 * 1000); //each hour
       ntp.begin();
       Serial.println("NTP init");
-    }
+    } 
     
     ntp.update();
 
@@ -58,7 +58,13 @@ String DisplayTime::getTime()
     return time;
 }
 
-bool DisplayTime::isRunning() {
-    //Serial.println(timeClient.getHours());
-    return ntp.year() > 0;
+String DisplayTime::getWifiStatus() {
+    //Serial.println(ntp.year());
+    switch (WiFi.status()) {
+        case WL_IDLE_STATUS: return "Wifi idle";
+        case WL_NO_SSID_AVAIL: return "No SSID";
+        case WL_CONNECTED: return "OK";
+        case WL_CONNECT_FAILED: return "Wifi fail";
+        case WL_DISCONNECTED: return "Disconnect";
+    }
 }

@@ -8,7 +8,7 @@ class DisplayTime
   public:
     void setup();
     String getTime();
-    bool isRunning();
+    String getWifiStatus();
     void loop();
   
   //private:

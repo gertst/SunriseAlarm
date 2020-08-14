@@ -1,3 +1,11 @@
+/**
+ * 
+ * Shows a clock.
+ * Time is coming from NTP server
+ * 
+ * 
+ */ 
+
 #include "Arduino.h"
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
 #include <SimpleTimer.h>
@@ -53,11 +61,11 @@ SimpleTimer timerEachMinute;
 
 void eachSecond() {
   //only show time if the time is initialized
-  String time = displayTime.getTime();
-  if (time == ) {
-    dotMatrix.showText();
+  String wifiStatus = displayTime.getWifiStatus();
+  if (wifiStatus == "OK") {
+    dotMatrix.showText(displayTime.getTime());
   } else {
-    dotMatrix.showText("Time ...");
+    dotMatrix.showText(wifiStatus);
   }
 
   int ldrValue = analogRead(LDR_PIN); //0 - 1023
