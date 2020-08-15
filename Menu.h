@@ -18,9 +18,9 @@ class Menu
   
   private:
     int menuSelection[MAX_MENU_DEPTH] = {0, -1, -1, -1, -1, -1, -1, -1};
-    StaticJsonDocument<1000> json;
+    StaticJsonDocument<4000> json;
     JsonObject currentObject;
-    JsonObject parentObject;
+    JsonArray parentArray;
     uint8_t currentDepth = 0;
 };
 

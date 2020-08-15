@@ -103,7 +103,9 @@ void updateWifiStatus() {
 
 void updateLDR() {
   int ldrValue = analogRead(LDR_PIN); //0 - 1023
-  uint8_t intensity = map(ldrValue, 0, 600, 6, 0);
+  uint8_t intensity = map(ldrValue, 0, 1023, 4, 0);
+  // Serial.print("intensity: ");
+  // Serial.println(intensity);
   dotMatrix.setIntensity(intensity); //0 - 15
 }
 
@@ -126,7 +128,11 @@ void setup() {
 
 void setMode(Mode newMode) {
   if (newMode == MODE_MENU) {
+    //reset the menu state
     menu.initMenu();
+  } else if (newMode == MODE_CLOCK) {
+    //don't wait for next second: already set it now.
+    updateClock();
   }
   mode = newMode;
 }
@@ -147,8 +153,12 @@ void loop() {
       updateClock();
       break;
     case MODE_MENU:
-      String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
-      dotMatrix.showText(menuLabel);
+      if (menu.getActiveMenuItem()["id"] == "Root") {
+        setMode(MODE_CLOCK);
+      } else {
+        String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
+        dotMatrix.showText(menuLabel);
+      }
       break;
     
 
