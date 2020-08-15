@@ -1,9 +1,23 @@
 /**
  * 
- * Shows a clock.
+ * Shows a clock and state of alarm (on/off)
  * Time is coming from NTP server
  * 
+ * Modes:
+ * 0. wifi status mode: when wifi connection is not (yet) established:
+ * - show wifi status on the screen
  * 
+ * 1. Alarm mode: When alarms goes of: 
+ * - rotating button = alarm off and back to clock mode
+ * - pressing button = snooze and back to clock mode
+ * 
+ * 2. Clock mode: when clock is shown
+ * - rotating button = go to menu mode (with return to clock mode after idle time)
+ * - pressing button = go to menu mode (with return to clock mode after idle time)
+ * 
+ * 3. Menu mode: when menu is shown
+ * - rotating button = next menu item (with return to clock mode after idle time)
+ * - pressing button = enter menu item
  */ 
 
 #include "Arduino.h"
@@ -14,6 +28,7 @@
 #include "DotMatix.h"
 #include "RotaryButton.h"
 #include "DisplayTime.h"
+#include "Menu.h"
 
 /* 
 static const uint8_t D0 = 16;
@@ -40,6 +55,14 @@ static const uint8_t D10 = 1; */
 
 #define LDR_PIN      17 //A0  //LDR: Light Dependent Resistor 
 
+enum Mode {
+  MODE_WIFI_STATUS,
+  MODE_CLOCK,
+  MODE_ALARM,
+  MODE_MENU
+};
+
+
 const char *ssid     = "telenet-Gert";
 const char *password = "gertstogo1627";
 
@@ -48,35 +71,40 @@ const char *password = "gertstogo1627";
 #define HARDWARE_TYPE MD_MAX72XX::DR1CR0RR0_HW
 
 
+int rotaryPosition = 0;
+int lastRotaryPosition = 0;
+SimpleTimer timerLDR;
+String lastTime = "";
+Mode mode;
+Mode lastMode;
+
 DotMatrix dotMatrix(MAX_DEVICES, HARDWARE_TYPE, CLK_PIN, DATA_PIN, CS_PIN);
 RotaryButton rotaryButton(ENCODER_A_PIN, ENCODER_B_PIN, SWITCH_PIN);
 DisplayTime displayTime;
+Menu menu;
 
-int rotaryPosition = 0;
-int lastRotaryPosition = 0;
-SimpleTimer timerEachSecond;
-SimpleTimer timerEachMinute;
-
-
-
-void eachSecond() {
-  //only show time if the time is initialized
-  String wifiStatus = displayTime.getWifiStatus();
-  if (wifiStatus == "OK") {
-    dotMatrix.showText(displayTime.getTime());
-  } else {
-    dotMatrix.showText(wifiStatus);
+void updateClock() {
+  String newTime = displayTime.getTime();
+  if (lastTime != newTime) {
+    lastTime = newTime;
+    dotMatrix.showText(newTime);
   }
-
-  int ldrValue = analogRead(LDR_PIN); //0 - 1023
-  uint8_t intensity = map(ldrValue, 0, 1023, 6, 0);
-  dotMatrix.setIntensity(intensity); //0 - 15
-  // Serial.print("LDR: intensity: ");
-  // Serial.println(intensity); 
 }
 
-void eachMinute() {
+void updateWifiStatus() {
+  //go to wifi mode if wifi not OK and return to last mode once wifi is OK
+  String wifiStatus = displayTime.getWifiStatus();
+  dotMatrix.showText(wifiStatus);
 
+  if (wifiStatus == "OK") {
+    setMode(MODE_CLOCK);
+  }
+}
+
+void updateLDR() {
+  int ldrValue = analogRead(LDR_PIN); //0 - 1023
+  uint8_t intensity = map(ldrValue, 0, 600, 6, 0);
+  dotMatrix.setIntensity(intensity); //0 - 15
 }
 
 void setup() {
@@ -84,15 +112,23 @@ void setup() {
   Serial.println("Ready");
   //ArduinoOTA.begin(); 
   dotMatrix.setup();
-  dotMatrix.showText("Wifi...");
+  menu.setup();
 
   WiFi.begin(ssid, password);
+
+  setMode(MODE_WIFI_STATUS);
   
   displayTime.setup();
 
-  timerEachSecond.setInterval(1000, eachSecond);
-  timerEachMinute.setInterval(60 * 1000, eachMinute);
+  timerLDR.setInterval(1000, updateLDR);
 
+}
+
+void setMode(Mode newMode) {
+  if (newMode == MODE_MENU) {
+    menu.initMenu();
+  }
+  mode = newMode;
 }
 
 void loop() {
@@ -100,17 +136,47 @@ void loop() {
   dotMatrix.loop();
   displayTime.loop();
   
-  timerEachSecond.run();
-  timerEachMinute.run();
+  timerLDR.run();
+
+
+  switch (mode) {
+    case MODE_WIFI_STATUS:
+      updateWifiStatus();
+      break;
+    case MODE_CLOCK:
+      updateClock();
+      break;
+    case MODE_MENU:
+      String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
+      dotMatrix.showText(menuLabel);
+      break;
+    
+
+  }
+
+  //if menu is idle, go back to clock mode
+  if (mode == MODE_MENU && rotaryButton.getSecondsIdle() > 5) {
+    setMode(MODE_CLOCK);
+  }
 
   if (rotaryButton.getIsButtonPressed()) {
-    //Serial.println("pressed");
-    dotMatrix.showText("Press!");
+    if (mode == MODE_CLOCK) {
+      setMode(MODE_MENU);
+    } else if (mode == MODE_MENU) {
+      String menuId = menu.commitMenu();
+      Serial.println(F("menuId: "));
+      Serial.println(menuId);
+    }
   }
 
   rotaryPosition = rotaryButton.getPosition();
   if (lastRotaryPosition != rotaryPosition) {
-    dotMatrix.showText(String(rotaryPosition));
+    //dotMatrix.showText(String(rotaryPosition));
+    if (mode != MODE_MENU) {
+      setMode(MODE_MENU);
+      return;
+    }
+    menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     lastRotaryPosition = rotaryPosition;
   }
 }

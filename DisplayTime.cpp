@@ -5,7 +5,6 @@
 #include <WiFiUdp.h>
 #include <NTP.h> //https://github.com/sstaub/NTP
 
-
 WiFiUDP wifiUdp;
 NTP ntp(wifiUdp);
 
@@ -65,6 +64,6 @@ String DisplayTime::getWifiStatus() {
         case WL_NO_SSID_AVAIL: return "No SSID";
         case WL_CONNECTED: return "OK";
         case WL_CONNECT_FAILED: return "Wifi fail";
-        case WL_DISCONNECTED: return "Disconnect";
+        case WL_DISCONNECTED: return "Wifi ...";
     }
 }

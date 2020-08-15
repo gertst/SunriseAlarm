@@ -1,0 +1,30 @@
+{
+   "label": "Menu",
+   "items": [
+      {
+         "label": "Alarm", 
+         "items": [
+            {
+               "id": "AlarmOn", 
+               "label": "on"
+            },
+            {
+               "id": "AlarmOff", 
+               "label": "off"
+            }]
+      },
+      {
+         "label": "Light", 
+         "items": [
+            {
+               "id": "LightOn", 
+               "label": "on"
+            },
+            {
+               "id": "LightOff", 
+               "label": "off"
+            }
+         ]
+      }
+   ]
+}

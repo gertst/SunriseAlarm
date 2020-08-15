@@ -1,6 +1,7 @@
 #include "RotaryButton.h"
 #include "Arduino.h"
 
+int lastActivityTime = 0;
 
 RotaryButton::RotaryButton(uint8_t encoderAPin_, uint8_t encoderBPin_, uint8_t switchPin_) {
     encoderAPin = encoderAPin_;
@@ -28,11 +29,17 @@ int RotaryButton::getPosition()
             encoderPosCount--;
         }
     
-        //Serial.print("Encoder Position: ");
+        lastActivityTime = millis();
+
+        Serial.print("Rotary: ");
         Serial.println(encoderPosCount);
     }
     valueALast = valueA;
     return roundf(encoderPosCount / 2); // we divide by 2 because stepper has an inbetween step that is not required
+}
+
+unsigned long RotaryButton::getSecondsIdle() {
+    return long((millis() - lastActivityTime) / 1000);
 }
 
 boolean RotaryButton::getIsButtonPressed() {
@@ -41,6 +48,7 @@ boolean RotaryButton::getIsButtonPressed() {
     // Serial.println(switchValue);
     if (!isButtonPressed && switchValue == LOW) {
         isButtonPressed = true;
+        lastActivityTime = millis();
         return true;
     } else {
         if (switchValue == HIGH) {

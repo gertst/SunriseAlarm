@@ -11,6 +11,7 @@ class RotaryButton
     void setup();
     int getPosition();
     boolean getIsButtonPressed();
+    unsigned long getSecondsIdle();
   
   private:
     uint8_t encoderAPin;
