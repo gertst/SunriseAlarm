@@ -64,6 +64,6 @@ String DisplayTime::getWifiStatus() {
         case WL_NO_SSID_AVAIL: return "No SSID available";
         case WL_CONNECTED: return "OK"; //don't change, used for checking when ready
         case WL_CONNECT_FAILED: return "Wifi connection failed";
-        case WL_DISCONNECTED: return "Wifi disconnected";
+        case WL_DISCONNECTED: return "Wifi ...";
     }
 }

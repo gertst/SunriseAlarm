@@ -55,6 +55,19 @@ static const uint8_t D10 = 1; */
 
 #define LDR_PIN      17 //A0  //LDR: Light Dependent Resistor 
 
+// Turn on debug statements to the serial output
+#define  DEBUG_ENABLE  1
+
+#if  DEBUG_ENABLE
+#define DEBUG(s, x) { Serial.print(F(s)); Serial.print(x); }
+#define DEBUGS(x) Serial.print(F(x))
+#define DEBUGX(x) Serial.println(x, HEX)
+#else
+#define DEBUG(s, x)
+#define DEBUGS(x)
+#define DEBUGX(x)
+#endif
+
 enum Mode {
   MODE_WIFI_STATUS,
   MODE_CLOCK,
@@ -184,9 +197,9 @@ void loop() {
     //dotMatrix.showText(String(rotaryPosition));
     if (mode != MODE_MENU) {
       setMode(MODE_MENU);
-      return;
+    } else {
+      menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     }
-    menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     lastRotaryPosition = rotaryPosition;
   }
 }
