@@ -23,6 +23,7 @@
 #include "Arduino.h"
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
 #include <SimpleTimer.h>
+#include <EEPROM.h>
 
 
 #include "DotMatix.h"
@@ -55,6 +56,7 @@ static const uint8_t D10 = 1; */
 
 #define LDR_PIN      17 //A0  //LDR: Light Dependent Resistor 
 
+
 // Turn on debug statements to the serial output
 #define  DEBUG_ENABLE  1
 
@@ -71,7 +73,8 @@ static const uint8_t D10 = 1; */
 enum Mode {
   MODE_WIFI_STATUS,
   MODE_CLOCK,
-  MODE_ALARM,
+  MODE_SET_ALARM_HOURS,
+  MODE_SET_ALARM_MINUTES,
   MODE_MENU
 };
 
@@ -104,6 +107,10 @@ void updateClock() {
   }
 }
 
+void updateAlarm() {
+  dotMatrix.showText(displayTime.getAlarmText(mode == MODE_SET_ALARM_HOURS ? 1 : 2));
+}
+
 void updateWifiStatus() {
   //go to wifi mode if wifi not OK and return to last mode once wifi is OK
   String wifiStatus = displayTime.getWifiStatus();
@@ -123,9 +130,11 @@ void updateLDR() {
 }
 
 void setup() {
+  EEPROM.begin(512); 
   Serial.begin(115200);
   Serial.println("Ready");
   //ArduinoOTA.begin(); 
+  displayTime.setup();
   dotMatrix.setup();
   menu.setup();
 
@@ -133,10 +142,20 @@ void setup() {
 
   setMode(MODE_WIFI_STATUS);
   
-  displayTime.setup();
 
   timerLDR.setInterval(1000, updateLDR);
+  
+  dotMatrix.isAlarmOn = displayTime.getIsAlarmOn();
 
+}
+
+void processCommand(String command) {
+  if (command == "AlarmOnOff") {
+    displayTime.setIsAlarmOn(!displayTime.getIsAlarmOn());
+    dotMatrix.isAlarmOn = displayTime.getIsAlarmOn();
+  } else if (command == "SetAlarm") {
+    setMode(MODE_SET_ALARM_HOURS);
+  }
 }
 
 void setMode(Mode newMode) {
@@ -146,7 +165,10 @@ void setMode(Mode newMode) {
   } else if (newMode == MODE_CLOCK) {
     //don't wait for next second: already set it now.
     updateClock();
-  }
+  } else if (newMode == MODE_SET_ALARM_HOURS || newMode == MODE_SET_ALARM_MINUTES) {
+    //don't wait for next second: already set it now.
+    updateAlarm();
+  } 
   mode = newMode;
 }
 
@@ -157,7 +179,6 @@ void loop() {
   
   timerLDR.run();
 
-
   switch (mode) {
     case MODE_WIFI_STATUS:
       updateWifiStatus();
@@ -165,11 +186,20 @@ void loop() {
     case MODE_CLOCK:
       updateClock();
       break;
+    case MODE_SET_ALARM_HOURS:
+      updateAlarm();
+      break;
+    case MODE_SET_ALARM_MINUTES:
+      updateAlarm();
+      break;
     case MODE_MENU:
       if (menu.getActiveMenuItem()["id"] == "Root") {
         setMode(MODE_CLOCK);
       } else {
         String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
+        if (menu.getActiveMenuItem()["id"] == "Alarm") {
+          menuLabel + ": " + displayTime.getAlarmText(0);
+        }
         dotMatrix.showText(menuLabel);
       }
       break;
@@ -178,7 +208,7 @@ void loop() {
   }
 
   //if menu is idle, go back to clock mode
-  if (mode == MODE_MENU && rotaryButton.getSecondsIdle() > 8) {
+  if (mode != MODE_CLOCK && mode != MODE_WIFI_STATUS && rotaryButton.getSecondsIdle() > 8) {
     setMode(MODE_CLOCK);
   }
 
@@ -189,14 +219,23 @@ void loop() {
       String menuId = menu.commitMenu();
       Serial.println(F("menuId: "));
       Serial.println(menuId);
+      processCommand(menuId);
+    } else if (mode == MODE_SET_ALARM_HOURS) {
+      setMode(MODE_SET_ALARM_MINUTES);
+    } else if (mode == MODE_SET_ALARM_MINUTES) {
+      setMode(MODE_MENU);
     }
   }
 
   rotaryPosition = rotaryButton.getPosition();
   if (lastRotaryPosition != rotaryPosition) {
     //dotMatrix.showText(String(rotaryPosition));
-    if (mode != MODE_MENU) {
+    if (mode == MODE_CLOCK) {
       setMode(MODE_MENU);
+    } else if (mode == MODE_SET_ALARM_HOURS) {
+      displayTime.updateAlarmHours(rotaryPosition - lastRotaryPosition);
+    } else if (mode == MODE_SET_ALARM_MINUTES) {
+      displayTime.updateAlarmMinutes(rotaryPosition - lastRotaryPosition);
     } else {
       menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     }

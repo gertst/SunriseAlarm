@@ -24,6 +24,7 @@ void DotMatrix::loop()
   if (parola.displayAnimate()) // animates and returns true when an animation is completed
   {
     if (newMessageAvailable) {
+
       parola.setTextBuffer(newText.c_str());
       textExceedsDisplay = parola.getTextColumns(newText.c_str()) > 32;
       
@@ -44,6 +45,10 @@ void DotMatrix::loop()
         parola.displayReset();  
       }
     }
+  }
+  //alarm dot
+  if (!textExceedsDisplay) {
+    parola.getGraphicObject()->setPoint(0, 0, isAlarmOn);
   }
 }
 

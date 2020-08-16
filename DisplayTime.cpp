@@ -4,6 +4,11 @@
 #include <ESP8266WiFi.h> 
 #include <WiFiUdp.h>
 #include <NTP.h> //https://github.com/sstaub/NTP
+#include <EEPROM.h>
+
+#define EEPROM_ADDR_ALARM_ON_OFF 0
+#define EEPROM_ADDR_ALARM_HOURS 1
+#define EEPROM_ADDR_ALARM_MINUTES 2
 
 WiFiUDP wifiUdp;
 NTP ntp(wifiUdp);
@@ -17,7 +22,9 @@ void pollForWifi() {
 
 
 void DisplayTime::setup() {
-    
+    isAlarmOn = (bool) EEPROM.read(EEPROM_ADDR_ALARM_ON_OFF);
+    alarmHour = EEPROM.read(EEPROM_ADDR_ALARM_HOURS);
+    alarmMinute = EEPROM.read(EEPROM_ADDR_ALARM_MINUTES);
 }
 
 void DisplayTime::loop() {
@@ -37,6 +44,16 @@ void DisplayTime::loop() {
 
     //return wifiOK && ntpOK;
 
+}
+
+bool DisplayTime::getIsAlarmOn() {
+    return isAlarmOn;
+}
+
+void DisplayTime::setIsAlarmOn(bool value) {
+    isAlarmOn = value;
+    EEPROM.write((byte)EEPROM_ADDR_ALARM_ON_OFF, isAlarmOn);
+    EEPROM.commit();
 }
 
 
@@ -66,4 +83,65 @@ String DisplayTime::getWifiStatus() {
         case WL_CONNECT_FAILED: return "Wifi connection failed";
         case WL_DISCONNECTED: return "Wifi ...";
     }
+}
+
+void DisplayTime::updateAlarmHours(int rotation) {
+    if (rotation > 0) {
+        alarmHour ++;
+        if (alarmHour > 23) {
+            alarmHour = 0;
+        }
+    } else {
+        if (alarmHour == 0) {
+            alarmHour = 23;
+        } else {
+            alarmHour --;
+        }
+    }
+    EEPROM.write(EEPROM_ADDR_ALARM_HOURS, alarmHour);
+    EEPROM.commit();
+}
+
+void DisplayTime::updateAlarmMinutes(int rotation) {
+    if (rotation > 0) {
+        alarmMinute += 5;
+        if (alarmMinute > 55) {
+            alarmMinute = 0;
+        }
+    } else {
+        if (alarmMinute == 0) {
+            alarmMinute = 55;
+        } else {
+            alarmMinute -= 5;
+        }
+    }
+    EEPROM.write(EEPROM_ADDR_ALARM_MINUTES, alarmMinute);
+    EEPROM.commit();
+}
+
+/**
+ * @alarmMode: 
+ *   0 = alarm hours + minutes
+ *   1 = alarm hours blinking
+ *   2 = alarm minutes blinking
+ */ 
+String DisplayTime::getAlarmText(byte alarmMode) {
+    String time = String(alarmHour) + ":";
+    if (alarmMinute < 10) {
+        time = time + "0";
+    }
+    time = time + String(alarmMinute);
+
+    // if (isHours) {
+    //     if (ntp.seconds() % 2) {
+    //         time = time + "    ";
+    //     } else {
+    //         if (alarmHour < 10) {
+    //             time = time + "0"
+    //         }
+    //         time = time + alarmHour;
+    //     }
+
+    // }
+    return time;
 }

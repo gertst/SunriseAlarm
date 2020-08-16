@@ -14,6 +14,7 @@ class DotMatrix
     void loop();
     void showText(String Text);
     void setIntensity(uint8_t intensity);
+    bool isAlarmOn = false;
   
   private:
     MD_Parola parola;

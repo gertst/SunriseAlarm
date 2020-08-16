@@ -5,7 +5,7 @@
 
 void Menu::setup() {
 
-    const char* jsonString = "{\"label\":\"Menu\",\"id\":\"Root\",\"items\":[{\"label\":\"Alarmpje!\",\"items\":[{\"id\":\"AlarmOn\",\"label\":\"On\"},{\"id\":\"AlarmOff\",\"label\":\"Off\"},{\"id\":\"AlarmSetHour\",\"label\":\"Set hours\",\"items\":[{\"id\":\"0 h\",\"label\":\"0 h\"},{\"id\":\"1 h\",\"label\":\"1 h\"},{\"id\":\"2 h\",\"label\":\"2 h\"},{\"id\":\"3 h\",\"label\":\"3 h\"},{\"id\":\"4 h\",\"label\":\"4 h\"},{\"id\":\"5 h\",\"label\":\"5 h\"},{\"id\":\"6 h\",\"label\":\"6 h\"},{\"id\":\"7 h\",\"label\":\"7 h\"},{\"id\":\"8 h\",\"label\":\"8 h\"},{\"id\":\"9 h\",\"label\":\"9 h\"},{\"id\":\"10 h\",\"label\":\"10 h\"},{\"id\":\"11 h\",\"label\":\"11 h\"},{\"id\":\"12 h\",\"label\":\"12 h\"},{\"id\":\"13 h\",\"label\":\"13 h\"},{\"id\":\"14 h\",\"label\":\"14 h\"},{\"id\":\"15 h\",\"label\":\"15 h\"},{\"id\":\"16 h\",\"label\":\"16 h\"},{\"id\":\"17 h\",\"label\":\"17 h\"},{\"id\":\"18 h\",\"label\":\"18 h\"},{\"id\":\"19 h\",\"label\":\"19 h\"},{\"id\":\"20 h\",\"label\":\"20 h\"},{\"id\":\"21 h\",\"label\":\"21 h\"},{\"id\":\"22 h\",\"label\":\"22 h\"},{\"id\":\"23 h\",\"label\":\"23 h\"}]},{\"id\":\"AlarmSetMinute\",\"label\":\"Set minutes\",\"items\":[{\"id\":\"0 m\",\"label\":\"0 m\"},{\"id\":\"5 m\",\"label\":\"5 m\"},{\"id\":\"10 m\",\"label\":\"10 m\"},{\"id\":\"15 m\",\"label\":\"15 m\"},{\"id\":\"20 m\",\"label\":\"20 m\"},{\"id\":\"25 m\",\"label\":\"25 m\"},{\"id\":\"30 m\",\"label\":\"30 m\"},{\"id\":\"35 m\",\"label\":\"35 m\"},{\"id\":\"40 m\",\"label\":\"40 m\"},{\"id\":\"45 m\",\"label\":\"45 m\"},{\"id\":\"50 m\",\"label\":\"50 m\"},{\"id\":\"55 m\",\"label\":\"55 m\"}]},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"label\":\"Light\",\"items\":[{\"id\":\"LightOn\",\"label\":\"On\"},{\"id\":\"LightOff\",\"label\":\"Off\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"id\":\"Back\",\"label\":\"Back\"}]}";
+    const char* jsonString = "{\"label\":\"Menu\",\"id\":\"Root\",\"items\":[{\"id\":\"Alarm\",\"label\":\"Alarm\",\"items\":[{\"id\":\"AlarmOnOff\",\"label\":\"On|Off\",\"back\":0},{\"id\":\"SetAlarm\",\"label\":\"Set alarm\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"label\":\"Light\",\"items\":[{\"id\":\"LightOn\",\"label\":\"On\"},{\"id\":\"LightOff\",\"label\":\"Off\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"id\":\"Back\",\"label\":\"Back\"}]}";
 
     DeserializationError error = deserializeJson(json, jsonString);
     if (error) {
@@ -52,27 +52,41 @@ String Menu::commitMenu() {
         menuSelection[currentDepth + 1] = 0;
         return "";
     } else {
-        //go back
-        menuSelection[currentDepth] = -1;
-        // if (currentDepth > 0) {
-        //     menuSelection[currentDepth - 1] = -1;
-        // }
+        //go back?
+        if (currentObject.containsKey("back")) {
+            if (currentObject["back"] >= 1) {
+                menuSelection[currentDepth] = -1;
+            }
+            if (currentObject["back"] >= 2) {
+                menuSelection[currentDepth - 1] = -1;
+            }
+            if (currentObject["back"] >= 3) {
+                menuSelection[currentDepth - 2] = -1;
+            }
+        } else {
+            menuSelection[currentDepth] = -1;
+        }
+        
         return currentObject["id"];
     }
 }
 
 void Menu::rotateMenu(int rotation) {
     getActiveMenuItem();
-    Serial.print(F("menuSelection: "));
-    for(int i = 0; i < MAX_MENU_DEPTH; i++) {
-        Serial.print(menuSelection[i]);
-        Serial.print(", ");
+    // Serial.print(F("menuSelection: "));
+    // for(int i = 0; i < MAX_MENU_DEPTH; i++) {
+    //     Serial.print(menuSelection[i]);
+    //     Serial.print(", ");
+    // }
+    // Serial.println("");
+    // Serial.print(F("currentDepth:"));
+    // Serial.println(currentDepth);
+    // Serial.print(F("menuSelection[currentDepth]:"));
+    // Serial.println(menuSelection[currentDepth]);
+
+    if (rotation < 0 && menuSelection[currentDepth] == 0) {
+        menuSelection[currentDepth] = parentArray.size() - 1;
+    } else {
+        menuSelection[currentDepth] = (menuSelection[currentDepth] + rotation) % parentArray.size();
     }
-    Serial.println("");
-    Serial.print(F("currentDepth:"));
-    Serial.println(currentDepth);
-    Serial.print(F("menuSelection[currentDepth]:"));
-    Serial.println(menuSelection[currentDepth]);
-    
-    menuSelection[currentDepth] = (menuSelection[currentDepth] + rotation) % parentArray.size();
 }
