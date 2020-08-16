@@ -61,9 +61,9 @@ String DisplayTime::getWifiStatus() {
     //Serial.println(ntp.year());
     switch (WiFi.status()) {
         case WL_IDLE_STATUS: return "Wifi idle";
-        case WL_NO_SSID_AVAIL: return "No SSID";
-        case WL_CONNECTED: return "OK";
-        case WL_CONNECT_FAILED: return "Wifi fail";
-        case WL_DISCONNECTED: return "Wifi ...";
+        case WL_NO_SSID_AVAIL: return "No SSID available";
+        case WL_CONNECTED: return "OK"; //don't change, used for checking when ready
+        case WL_CONNECT_FAILED: return "Wifi connection failed";
+        case WL_DISCONNECTED: return "Wifi disconnected";
     }
 }

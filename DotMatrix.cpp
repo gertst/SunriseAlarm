@@ -11,8 +11,6 @@ void DotMatrix::setup()
   //Serial.println("DotMatrix::setup");
   parola.displayClear();
   parola.displaySuspend(false);
-  byte i = 2;                                            //EEPROM.read(0);
-  parola.setIntensity(i);                               // Values from 0 to 15
   parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
   parola.setTextAlignment(PA_CENTER);
   parola.setSpeed(FRAME_DELAY);
@@ -26,20 +24,25 @@ void DotMatrix::loop()
   {
     if (newMessageAvailable)
     {
-      parola.setTextBuffer(newText.c_str());
-      parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
-      //parola.setTextEffect(PA_SCROLL_DOWN, PA_NO_EFFECT); //in and out effect
-      newMessageAvailable = false;
       parola.displayReset();  
-    } else {
-      //parola.setTextEffect(PA_PRINT, PA_NO_EFFECT);
+      parola.setTextBuffer(newText.c_str());
+      //textLengthInPixels = parola.getTextColumns(newText.c_str());
+      
+      if (textLengthInPixels > 32) {
+        parola.setTextEffect(PA_SCROLL_LEFT, PA_SCROLL_LEFT); //in and out effect
+      } else {
+        parola.setTextEffect(PA_PRINT, PA_NO_EFFECT); //in and out effect
+      }
+      newMessageAvailable = false;
     }
   }
 }
 
 void DotMatrix::showText(String text) {
-  newText = text;
-  newMessageAvailable = true;
+  if (newText != text) {
+    newText = text;
+    newMessageAvailable = true;
+  }
 }
 
 //0 to 15

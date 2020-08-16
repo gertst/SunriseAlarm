@@ -19,6 +19,7 @@ class DotMatrix
     MD_Parola parola;
     bool newMessageAvailable = false;
     String newText;
+    uint8_t textLengthInPixels = 0;
 };
 
 #endif

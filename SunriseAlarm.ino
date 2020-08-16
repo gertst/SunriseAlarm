@@ -165,7 +165,7 @@ void loop() {
   }
 
   //if menu is idle, go back to clock mode
-  if (mode == MODE_MENU && rotaryButton.getSecondsIdle() > 5) {
+  if (mode == MODE_MENU && rotaryButton.getSecondsIdle() > 8) {
     setMode(MODE_CLOCK);
   }
 

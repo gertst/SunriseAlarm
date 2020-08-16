@@ -44,16 +44,20 @@ unsigned long RotaryButton::getSecondsIdle() {
 
 boolean RotaryButton::getIsButtonPressed() {
     int switchValue = digitalRead(switchPin);
-    // Serial.print("sw:");
-    // Serial.println(switchValue);
-    if (!isButtonPressed && switchValue == LOW) {
-        isButtonPressed = true;
-        lastActivityTime = millis();
-        return true;
-    } else {
-        if (switchValue == HIGH) {
-            isButtonPressed = false;
+
+    //disable for 500 millis
+    if (millis() - lastActivityTime > 500) {
+        if (!isButtonPressed && switchValue == LOW) {
+            isButtonPressed = true;
+            lastActivityTime = millis();
+            return true;
+        } else {
+            if (switchValue == HIGH) {
+                isButtonPressed = false;
+            }
+            return false;
         }
+    } else {
         return false;
     }
 }

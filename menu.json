@@ -11,11 +11,11 @@
             },
             {
                "id": "AlarmOff", 
-               "label": "0ff"
+               "label": "Off"
             },
             {
                "id": "AlarmSetHour", 
-               "label": "Set hour",
+               "label": "Set hours",
                "items": [
                   {
                      "id": "0 h", 
@@ -117,7 +117,7 @@
             },
             {
                "id": "AlarmSetMinute", 
-               "label": "Set min",
+               "label": "Set minutes",
                "items": [
                   {
                      "id": "0 m", 
