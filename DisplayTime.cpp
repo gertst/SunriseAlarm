@@ -120,28 +120,25 @@ void DisplayTime::updateAlarmMinutes(int rotation) {
 }
 
 /**
- * @alarmMode: 
+ * Text that should be shown when alarm is set
+ * @param alarmMode: 
  *   0 = alarm hours + minutes
  *   1 = alarm hours blinking
  *   2 = alarm minutes blinking
  */ 
 String DisplayTime::getAlarmText(byte alarmMode) {
-    String time = String(alarmHour) + ":";
+    String time;
+    time = String(alarmHour) + ":";
     if (alarmMinute < 10) {
         time = time + "0";
     }
     time = time + String(alarmMinute);
 
-    // if (isHours) {
-    //     if (ntp.seconds() % 2) {
-    //         time = time + "    ";
-    //     } else {
-    //         if (alarmHour < 10) {
-    //             time = time + "0"
-    //         }
-    //         time = time + alarmHour;
-    //     }
-
+    // if (alarmMode == 0 || ntp.seconds() % 2) {
+    //     return time;
+    // } else {
+    //     return "--:--";
     // }
+
     return time;
 }

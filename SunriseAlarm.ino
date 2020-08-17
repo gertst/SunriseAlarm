@@ -124,8 +124,8 @@ void updateWifiStatus() {
 void updateLDR() {
   int ldrValue = analogRead(LDR_PIN); //0 - 1023
   uint8_t intensity = map(ldrValue, 0, 1023, 4, 0);
-  // Serial.print("intensity: ");
-  // Serial.println(intensity);
+  Serial.print("intensity: ");
+  Serial.println(intensity);
   dotMatrix.setIntensity(intensity); //0 - 15
 }
 
@@ -198,7 +198,7 @@ void loop() {
       } else {
         String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
         if (menu.getActiveMenuItem()["id"] == "Alarm") {
-          menuLabel + ": " + displayTime.getAlarmText(0);
+          menuLabel = menuLabel + ": " + displayTime.getAlarmText(0);
         }
         dotMatrix.showText(menuLabel);
       }

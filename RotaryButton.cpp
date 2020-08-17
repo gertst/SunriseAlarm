@@ -35,6 +35,7 @@ int RotaryButton::getPosition()
         Serial.println(encoderPosCount);
     }
     valueALast = valueA;
+    //return encoderPosCount;
     return roundf(encoderPosCount / 2); // we divide by 2 because stepper has an inbetween step that is not required
 }
 
