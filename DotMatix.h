@@ -15,12 +15,16 @@ class DotMatrix
     void showText(String Text);
     void setIntensity(uint8_t intensity);
     bool isAlarmOn = false;
+    void underlineHours(bool value);
+    void underlineMinutes(bool value);
   
   private:
     MD_Parola parola;
     bool newMessageAvailable = false;
     String newText;
     bool textExceedsDisplay = false;
+    bool hoursUnderlined = false;
+    bool minutesUnderlined = false;
 };
 
 #endif

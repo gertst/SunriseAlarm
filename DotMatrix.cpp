@@ -32,7 +32,7 @@ void DotMatrix::setup()
   parola.addChar('7', dig7);
   parola.addChar('8', dig8);
   parola.addChar('9', dig9);
-  parola.addChar('═', digitSpace);
+  parola.addChar('$', digitSpace);
 
   parola.displayClear();
   parola.displaySuspend(false);
@@ -76,6 +76,30 @@ void DotMatrix::loop()
   if (!textExceedsDisplay) {
     parola.getGraphicObject()->setPoint(0, 0, isAlarmOn);
   }
+
+  //underline?
+  if (!textExceedsDisplay && hoursUnderlined) {
+    if (((long)roundf(millis()/100) % 20 > 10)) {
+      for (uint8_t i = 0; i < 11; i++) {
+        parola.getGraphicObject()->setPoint(7, 18 + i, 1);
+      }
+    } else {
+      for (uint8_t i = 0; i < 12; i++) {
+        parola.getGraphicObject()->setPoint(7, 18 + i, 0);
+      }
+    } 
+  } 
+  if (!textExceedsDisplay && minutesUnderlined) {
+    if (((long)roundf(millis()/100) % 20 > 10)) {
+      for (uint8_t i = 0; i < 11; i++) {
+        parola.getGraphicObject()->setPoint(7, 3 + i, 1);
+      }
+    } else {
+      for (uint8_t i = 0; i < 12; i++) {
+        parola.getGraphicObject()->setPoint(7, 3 + i, 0);
+      }
+    } 
+  } 
 }
 
 void DotMatrix::showText(String text) {
@@ -88,4 +112,12 @@ void DotMatrix::showText(String text) {
 //0 to 15
 void DotMatrix::setIntensity(uint8_t intensity) {
   parola.setIntensity(intensity);
+}
+
+void DotMatrix::underlineHours(bool value) {
+    hoursUnderlined = value;
+}
+
+void DotMatrix::underlineMinutes(bool value) {
+    minutesUnderlined = value;
 }

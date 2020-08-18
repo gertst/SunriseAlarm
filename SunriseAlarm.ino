@@ -24,6 +24,7 @@
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
 #include <SimpleTimer.h>
 #include <EEPROM.h>
+#include <ArduinoOTA.h>
 
 
 #include "DotMatix.h"
@@ -170,6 +171,8 @@ void setMode(Mode newMode) {
     updateAlarm();
   } 
   mode = newMode;
+  dotMatrix.underlineHours(mode == MODE_SET_ALARM_HOURS);
+  dotMatrix.underlineMinutes(mode == MODE_SET_ALARM_MINUTES);
 }
 
 void loop() {

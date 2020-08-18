@@ -56,8 +56,6 @@ void DisplayTime::setIsAlarmOn(bool value) {
     EEPROM.commit();
 }
 
-
-
 String DisplayTime::getTime()
 {
     
@@ -128,7 +126,10 @@ void DisplayTime::updateAlarmMinutes(int rotation) {
  */ 
 String DisplayTime::getAlarmText(byte alarmMode) {
     String time;
-    time = String(alarmHour) + ":";
+    if (alarmHour < 10) {
+        time = time + "$"; //add space with size of a digit
+    }
+    time = time + String(alarmHour) + ":";
     if (alarmMinute < 10) {
         time = time + "0";
     }
