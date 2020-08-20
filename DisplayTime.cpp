@@ -30,14 +30,20 @@ void DisplayTime::setup() {
 void DisplayTime::loop() {
 
     if (!wifiOK && WiFi.status() == WL_CONNECTED) {
-      wifiOK = true;
-      //define the start of summertime for Central Europe
-      ntp.ruleDST("CEST", Last, Sun, Mar, 2, 2 * 60); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
-      //define the standard time for Central Europe
-      ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
-      ntp.updateInterval(60 * 60 * 1000); //each hour
-      ntp.begin();
-      Serial.println("NTP init");
+        wifiOK = true;
+
+        Serial.print("Connected to ");
+        Serial.println(WiFi.SSID());     
+        Serial.print("IP address:\t");
+        Serial.println(WiFi.localIP());
+
+        //define the start of summertime for Central Europe
+        ntp.ruleDST("CEST", Last, Sun, Mar, 2, 2 * 60); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
+        //define the standard time for Central Europe
+        ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
+        ntp.updateInterval(60 * 60 * 1000); //each hour
+        ntp.begin();
+        Serial.println("NTP init");
     } 
     
     ntp.update();

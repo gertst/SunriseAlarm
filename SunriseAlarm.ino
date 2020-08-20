@@ -24,7 +24,8 @@
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
 #include <SimpleTimer.h>
 #include <EEPROM.h>
-#include <ArduinoOTA.h>
+#include <ArduinoOTA.h> //over the aire updates! http://arduinoetcetera.blogspot.com/2019/12/visual-studio-code-for-arduino-ota.html
+#include <Adafruit_NeoPixel.h>    //https://github.com/adafruit/Adafruit_NeoPixel
 
 
 #include "DotMatix.h"
@@ -55,8 +56,13 @@ static const uint8_t D10 = 1; */
 #define ENCODER_B_PIN   4  //D2
 #define SWITCH_PIN      0  //D3
 
-#define LDR_PIN      17 //A0  //LDR: Light Dependent Resistor 
+#define LDR_PIN        17  //A0  //LDR: Light Dependent Resistor 
 
+#define LED_STRIP_PIN  12  //D6
+#define NUMUMBER_OF_PIXELS_IN_LED_STRIP 150
+
+Adafruit_NeoPixel pixels(NUMUMBER_OF_PIXELS_IN_LED_STRIP, LED_STRIP_PIN, NEO_GRB + NEO_KHZ800);
+int cnt = 0;
 
 // Turn on debug statements to the serial output
 #define  DEBUG_ENABLE  1
@@ -134,15 +140,40 @@ void setup() {
   EEPROM.begin(512); 
   Serial.begin(115200);
   Serial.println("Ready");
-  //ArduinoOTA.begin(); 
+  
+  ArduinoOTA.setHostname("ESP8266");
+  ArduinoOTA.setPassword("gertstogo1627");
+
+  ArduinoOTA.onStart([]() {
+    Serial.println("Start");
+  });
+  ArduinoOTA.onEnd([]() {
+    Serial.println("\nEnd");
+  });
+  ArduinoOTA.onProgress([](unsigned int progress, unsigned int total) {
+    Serial.printf("Progress: %u%%\r", (progress / (total / 100)));
+  });
+  ArduinoOTA.onError([](ota_error_t error) {
+    Serial.printf("Error[%u]: ", error);
+    if (error == OTA_AUTH_ERROR) Serial.println("Auth Failed");
+    else if (error == OTA_BEGIN_ERROR) Serial.println("Begin Failed");
+    else if (error == OTA_CONNECT_ERROR) Serial.println("Connect Failed");
+    else if (error == OTA_RECEIVE_ERROR) Serial.println("Receive Failed");
+    else if (error == OTA_END_ERROR) Serial.println("End Failed");
+  });
+  ArduinoOTA.begin();
+  ArduinoOTA.setHostname("SunriseAlarm");  
+  Serial.println("OTA ready");
+
   displayTime.setup();
   dotMatrix.setup();
   menu.setup();
 
+  pixels.begin(); 
+
   WiFi.begin(ssid, password);
 
   setMode(MODE_WIFI_STATUS);
-  
 
   timerLDR.setInterval(1000, updateLDR);
   
@@ -182,6 +213,8 @@ void loop() {
   
   timerLDR.run();
 
+  ArduinoOTA.handle();  
+
   switch (mode) {
     case MODE_WIFI_STATUS:
       updateWifiStatus();
@@ -206,10 +239,17 @@ void loop() {
         dotMatrix.showText(menuLabel);
       }
       break;
-    
-
   }
 
+
+  pixels.clear(); // Set all pixel colors to 'off'
+  cnt++;
+  if (cnt == 255) {
+    cnt = 0;
+  }
+  pixels.setPixelColor(NUMUMBER_OF_PIXELS_IN_LED_STRIP, pixels.Color(cnt % 10, 0, 10 - cnt)); //RGB values, from 0,0,0 up to 255,255,255
+  pixels.show();   // Send the updated pixel colors to the hardware.
+  
   //if menu is idle, go back to clock mode
   if (mode != MODE_CLOCK && mode != MODE_WIFI_STATUS && rotaryButton.getSecondsIdle() > 8) {
     setMode(MODE_CLOCK);
