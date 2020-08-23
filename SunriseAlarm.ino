@@ -31,7 +31,6 @@
 #include "DisplayTime.h"
 #include "Menu.h"
 #include "LedStrip.h"
-
 /* 
 static const uint8_t D0 = 16;
 static const uint8_t D1 = 5;
@@ -59,6 +58,8 @@ static const uint8_t D10 = 1; */
 
 #define LED_STRIP_PIN  12  //D6
 #define NUMBER_OF_PIXELS_IN_LED_STRIP 150
+// Adafruit_NeoPixel strip(NUMBER_OF_PIXELS_IN_LED_STRIP, LED_STRIP_PIN, NEO_GRBW + NEO_KHZ800);
+// int cnt = 0;
 
 // Turn on debug statements to the serial output
 #define  DEBUG_ENABLE  1
@@ -135,13 +136,14 @@ void updateLDR() {
 }
 
 void setup() {
+  dotMatrix.setup();
+  dotMatrix.showText("Hello!");
+  dotMatrix.loop();
+  delay(500);
   EEPROM.begin(512); 
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
   WiFi.begin(ssid, password);
-  dotMatrix.showText("Hello!");
-  dotMatrix.loop();
-  delay(10);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {  
     Serial.println("Connection Failed! Rebooting...");  
     delay(5000);  
@@ -150,9 +152,15 @@ void setup() {
   
   ota.setup();
   displayTime.setup();
-  dotMatrix.setup();
   menu.setup();
   ledStrip.setup();
+
+  // #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
+  //   clock_prescale_set(clock_div_1);
+  // #endif
+  // strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
+  // strip.show();            // Turn OFF all pixels ASAP
+  // strip.setBrightness(40); // Set BRIGHTNESS to about 1/5 (max = 255)
 
   setMode(MODE_WIFI_STATUS);
 
@@ -196,6 +204,11 @@ void loop() {
 
   ota.loop();
   ledStrip.loop();
+  // colorWipe(strip.Color(cnt % 150,   40,   cnt % 39)     , 50); // Red
+  // cnt++;
+  // if (cnt > 10000) {
+  //   cnt = 0;
+  // }
 
   switch (mode) {
     case MODE_WIFI_STATUS:
@@ -259,3 +272,10 @@ void loop() {
   }
 }
 
+// void colorWipe(uint32_t color, int wait) {
+//   //for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
+//     strip.setPixelColor(cnt % 150, color);         //  Set pixel's color (in RAM)
+//     strip.show();                          //  Update strip to match
+//     //delay(wait);                           //  Pause for a moment
+//   //}
+// }

@@ -52,6 +52,7 @@ void DotMatrix::loop()
     if (newMessageAvailable) {
 
       parola.setTextBuffer(newText.c_str());
+      //getTextColumns is a new method
       textExceedsDisplay = parola.getTextColumns(newText.c_str()) > 32;
       
       if (textExceedsDisplay) {
