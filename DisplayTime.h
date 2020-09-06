@@ -15,11 +15,14 @@ class DisplayTime
     void updateAlarmHours(int rotation);
     void updateAlarmMinutes(int rotation);
     String getAlarmText(byte alarmMode);
+    bool alarmGoesOff();
+    void command(String topic, String msg);
   
   private:
     bool isAlarmOn = false;
-    byte alarmHour: 6;
-    byte alarmMinute: 50;
+    bool alarmIsTriggered = false;
+    byte alarmHour = 6;
+    byte alarmMinute = 50;
 };
 
 #endif

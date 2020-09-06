@@ -8,8 +8,8 @@ RotaryButton::RotaryButton(uint8_t encoderAPin_, uint8_t encoderBPin_, uint8_t s
     encoderBPin = encoderBPin_;
     switchPin = switchPin_;
     
-    pinMode (encoderAPin, INPUT);
-    pinMode (encoderBPin, INPUT);
+    pinMode (encoderAPin, INPUT_PULLUP);
+    pinMode (encoderBPin, INPUT_PULLUP);
     pinMode (switchPin, INPUT);
     valueALast = digitalRead(encoderAPin);
     encoderPosCount = 0;
@@ -46,8 +46,8 @@ unsigned long RotaryButton::getSecondsIdle() {
 boolean RotaryButton::getIsButtonPressed() {
     int switchValue = digitalRead(switchPin);
 
-    //disable for 500 millis
-    if (millis() - lastActivityTime > 500) {
+    //disable for 200 millis
+    if (millis() - lastActivityTime > 200) {
         if (!isButtonPressed && switchValue == LOW) {
             isButtonPressed = true;
             lastActivityTime = millis();

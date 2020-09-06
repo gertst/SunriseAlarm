@@ -13,10 +13,11 @@ class DotMatrix
     void setup();
     void loop();
     void showText(String Text);
-    void setIntensity(uint8_t intensity);
-    bool isAlarmOn = false;
+    void setIntensity(uint8_t intensity_);
     void underlineHours(bool value);
     void underlineMinutes(bool value);
+    void setAlarmDot(bool value);
+    void command(String topic, String msg);
   
   private:
     MD_Parola parola;
@@ -25,6 +26,9 @@ class DotMatrix
     bool textExceedsDisplay = false;
     bool hoursUnderlined = false;
     bool minutesUnderlined = false;
+    bool isAlarmOn = false;
+    bool refreshDot = true;
+    uint8_t intensity = 0;
 };
 
 #endif

@@ -4,7 +4,11 @@
 #include <MD_Parola.h> // Parola library to scroll and display text on the display (needs MD_MAX72xx library)  https://github.com/MajicDesigns/MD_Parola
 
 
+
 const int FRAME_DELAY = 25;
+
+//to add/replace characters for the font: https://pjrp.github.io/MDParolaFontEditor
+
 uint8_t dig0[] = {  5, 62, 127, 65, 127, 62 }; 	// 32 - '0'
 uint8_t dig1[] = {	5, 4, 66, 127, 127, 64 }; 	// 33 - '1'
 uint8_t dig2[] = {	5, 113, 121, 73, 79, 70 }; 	// 34 - '2'
@@ -46,11 +50,10 @@ void DotMatrix::setup()
 
 void DotMatrix::loop()
 {
-  
   if (parola.displayAnimate()) // animates and returns true when an animation is completed
   {
     if (newMessageAvailable) {
-
+      refreshDot = true;
       parola.setTextBuffer(newText.c_str());
       //getTextColumns is a new method
       textExceedsDisplay = parola.getTextColumns(newText.c_str()) > 32;
@@ -64,6 +67,8 @@ void DotMatrix::loop()
         //parola.displayText(newText.c_str(), PA_CENTER, FRAME_DELAY, 100, PA_PRINT, PA_NO_EFFECT);
         parola.setTextAlignment(PA_CENTER);
       }
+
+      //parola.setIntensity(intensity);
       parola.displayReset();  
       newMessageAvailable = false;
     } else {
@@ -71,11 +76,14 @@ void DotMatrix::loop()
         //keep on scrolling if prev scroll animation is finished
         parola.displayReset();  
       }
-    }
+    } 
+    
   }
+  
   //alarm dot
-  if (!textExceedsDisplay) {
+  if (!textExceedsDisplay && refreshDot) {
     parola.getGraphicObject()->setPoint(0, 0, isAlarmOn);
+    //refreshDot = false;
   }
 
   //underline?
@@ -101,6 +109,8 @@ void DotMatrix::loop()
       }
     } 
   } 
+  //parola.setIntensity(intensity);
+  parola.getGraphicObject()->control(MD_MAX72XX::INTENSITY, intensity);
 }
 
 void DotMatrix::showText(String text) {
@@ -111,8 +121,8 @@ void DotMatrix::showText(String text) {
 }
 
 //0 to 15
-void DotMatrix::setIntensity(uint8_t intensity) {
-  parola.setIntensity(intensity);
+void DotMatrix::setIntensity(uint8_t intensity_) {
+  intensity = intensity_;
 }
 
 void DotMatrix::underlineHours(bool value) {
@@ -121,4 +131,15 @@ void DotMatrix::underlineHours(bool value) {
 
 void DotMatrix::underlineMinutes(bool value) {
     minutesUnderlined = value;
+}
+
+void DotMatrix::setAlarmDot(bool value) {
+  this->isAlarmOn = value;
+  this->refreshDot = true;
+}
+
+void DotMatrix::command(String topic, String msg) {
+    //if (topic == "alarm") {
+    //    this->setAlarmDot(msg.toInt());
+    //}
 }

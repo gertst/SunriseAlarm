@@ -1,7 +1,7 @@
 #include "OTA.h"
 #include "Arduino.h"
 
-#include <ArduinoOTA.h> //over the aire updates! http://arduinoetcetera.blogspot.com/2019/12/visual-studio-code-for-arduino-ota.html
+#include <ArduinoOTA.h> //over the air updates! http://arduinoetcetera.blogspot.com/2019/12/visual-studio-code-for-arduino-ota.html
 
 
 void OTA::setup() {

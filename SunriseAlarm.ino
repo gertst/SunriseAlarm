@@ -24,6 +24,8 @@
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
 #include <SimpleTimer.h>
 #include <EEPROM.h>
+#include <Wire.h> //required by pin expander
+#include <Adafruit_MCP23017.h> //pin exapnder chip MCP23017
 
 #include "OTA.h"
 #include "DotMatix.h"
@@ -31,6 +33,9 @@
 #include "DisplayTime.h"
 #include "Menu.h"
 #include "LedStrip.h"
+#include "Mqtt.h"
+#include "DFPlayer.h"
+
 /* 
 static const uint8_t D0 = 16;
 static const uint8_t D1 = 5;
@@ -44,22 +49,40 @@ static const uint8_t D8 = 15;
 static const uint8_t D9 = 3;
 static const uint8_t D10 = 1; */
 
+/*
+Pin expander MCP23017
+name  physical pin  Adafruit pin
+GPB0	1             8	
+GPB1	2             9	
+GPB2	3             10	
+GPB3	4             11	
+GPB4	5             12	
+GPB5	6             13	
+GPB6	7             14	
+GPB7	8             15
+*/
+
+
 //dot matrix led display
-#define CLK_PIN   14 //D5
-#define DATA_PIN  13 //D7
-#define CS_PIN    2  //D4
+#define CLK_PIN           14 //D5
+#define DATA_PIN          13 //D7
+#define CS_PIN            15 //D8 
 
 //rotary switch
-#define ENCODER_A_PIN   5  //D1
-#define ENCODER_B_PIN   4  //D2
-#define SWITCH_PIN      0  //D3
+#define ENCODER_A_PIN     5  //D1 (CLOCK)
+#define ENCODER_B_PIN     4  //D2 (DT)
+#define SWITCH_PIN        0   //D3
+// digitalWrite(16, INPUT_PULLDOWN_16)
 
-#define LDR_PIN        17  //A0  //LDR: Light Dependent Resistor 
+#define LDR_PIN           17  //A0  //LDR: Light Dependent Resistor 
 
-#define LED_STRIP_PIN  12  //D6
+#define DFPlayer_RX_PIN   4  //D2
+#define DFPlayer_TX_PIN   16 //D0
+
+#define LED_STRIP_PIN     12  //D6
+
 #define NUMBER_OF_PIXELS_IN_LED_STRIP 150
-// Adafruit_NeoPixel strip(NUMBER_OF_PIXELS_IN_LED_STRIP, LED_STRIP_PIN, NEO_GRBW + NEO_KHZ800);
-// int cnt = 0;
+
 
 // Turn on debug statements to the serial output
 #define  DEBUG_ENABLE  1
@@ -79,12 +102,14 @@ enum Mode {
   MODE_CLOCK,
   MODE_SET_ALARM_HOURS,
   MODE_SET_ALARM_MINUTES,
-  MODE_MENU
+  MODE_MENU,
+  MODE_ALARM
 };
 
 
 const char *ssid     = "telenet-Gert";
 const char *password = "gertstogo1627";
+
 
 // Define the number of 8x8 dot matrix devices and the hardware SPI interface
 #define MAX_DEVICES 4
@@ -98,22 +123,33 @@ String lastTime = "";
 Mode mode;
 Mode lastMode;
 
+// Instance of MCP23017 library
+Adafruit_MCP23017 pinExpander;
+
 OTA ota;
 DotMatrix dotMatrix(MAX_DEVICES, HARDWARE_TYPE, CLK_PIN, DATA_PIN, CS_PIN);
 RotaryButton rotaryButton(ENCODER_A_PIN, ENCODER_B_PIN, SWITCH_PIN);
 DisplayTime displayTime;
 Menu menu;
 LedStrip ledStrip(LED_STRIP_PIN, NUMBER_OF_PIXELS_IN_LED_STRIP);
+Mqtt mqtt;
+DFPlayer dfPlayer(DFPlayer_RX_PIN, DFPlayer_TX_PIN);
+
+uint8_t intensity;
 
 void updateClock() {
   String newTime = displayTime.getTime();
+  if (mode == MODE_ALARM) {
+    newTime = millis() % 500 > 0 ? newTime : "ALARM";
+    //newTime = "ALARM";
+  }
   if (lastTime != newTime) {
     lastTime = newTime;
     dotMatrix.showText(newTime);
   }
 }
 
-void updateAlarm() {
+void updateSetAlarm() {
   dotMatrix.showText(displayTime.getAlarmText(mode == MODE_SET_ALARM_HOURS ? 1 : 2));
 }
 
@@ -129,13 +165,24 @@ void updateWifiStatus() {
 
 void updateLDR() {
   int ldrValue = analogRead(LDR_PIN); //0 - 1023
-  uint8_t intensity = map(ldrValue, 0, 1023, 4, 0);
-  Serial.print("intensity: ");
-  Serial.println(intensity);
+  intensity = map(ldrValue, 0, 1023, 15, 0);
+  intensity = max(0, intensity - 1);
+  //mqtt.publish("sunriseAlarm/clockIntensity", (String)intensity);
   dotMatrix.setIntensity(intensity); //0 - 15
 }
 
 void setup() {
+
+/// change pin to gpio pins - IMPORTANT: Serial monitor will NOT work anymore with this code
+/// revert back to serial pins with FUNCTION_0
+// pinMode(1, FUNCTION_3);  //GPIO 1 (TX) swap the pin to a GPIO.
+// pinMode(3, FUNCTION_3); //GPIO 3 (RX) swap the pin to a GPIO.
+///////////////////////
+
+  pinExpander.begin();
+  // Define GPA0 (physical pin 21) as output pin
+  pinExpander.pinMode(0, OUTPUT);
+
   dotMatrix.setup();
   dotMatrix.showText("Hello!");
   dotMatrix.loop();
@@ -143,43 +190,71 @@ void setup() {
   EEPROM.begin(512); 
   Serial.begin(115200);
   WiFi.mode(WIFI_STA);
+  WiFi.setSleepMode(WIFI_NONE_SLEEP);
   WiFi.begin(ssid, password);
   while (WiFi.waitForConnectResult() != WL_CONNECTED) {  
     Serial.println("Connection Failed! Rebooting...");  
     delay(5000);  
     ESP.restart();  
   }  
-  
+
   ota.setup();
   displayTime.setup();
   menu.setup();
   ledStrip.setup();
-
-  // #if defined(__AVR_ATtiny85__) && (F_CPU == 16000000)
-  //   clock_prescale_set(clock_div_1);
-  // #endif
-  // strip.begin();           // INITIALIZE NeoPixel strip object (REQUIRED)
-  // strip.show();            // Turn OFF all pixels ASAP
-  // strip.setBrightness(40); // Set BRIGHTNESS to about 1/5 (max = 255)
+  mqtt.setup();
+  dfPlayer.setup();
+  // mqtt.subscribe("sunriseAlarm/#");
+  mqtt.setCallback(mqttCallback);
 
   setMode(MODE_WIFI_STATUS);
 
-  timerLDR.setInterval(1000, updateLDR);
-  
-  dotMatrix.isAlarmOn = displayTime.getIsAlarmOn();
+  timerLDR.setInterval(400, updateLDR);
+
+  dotMatrix.setAlarmDot(displayTime.getIsAlarmOn());
 
 }
 
-void processCommand(String command) {
+void mqttCallback(String topic, String message) {
+  Serial.print("callback ");
+  Serial.print(topic);
+  Serial.println(message);
+
+  ledStrip.command(topic, message);
+  displayTime.command(topic, message);
+  dotMatrix.command(topic, message);
+  dfPlayer.command(topic, message);
+
+  if (topic == "sunriseAlarm/showAlarmHours") {
+    setMode(MODE_SET_ALARM_HOURS);
+  } else if (topic == "sunriseAlarm/showAlarmMinutes") {
+    setMode(MODE_SET_ALARM_MINUTES);
+  } else if (topic == "sunriseAlarm/alarmOnOff") {
+    processMenuCommand("AlarmOnOff");
+  }
+}
+
+void processMenuCommand(String command) {
   if (command == "AlarmOnOff") {
     displayTime.setIsAlarmOn(!displayTime.getIsAlarmOn());
-    dotMatrix.isAlarmOn = displayTime.getIsAlarmOn();
+    dotMatrix.setAlarmDot(displayTime.getIsAlarmOn());
   } else if (command == "SetAlarm") {
     setMode(MODE_SET_ALARM_HOURS);
   }
 }
 
 void setMode(Mode newMode) {
+  if (mode == newMode) {
+    return;
+  }
+
+  //if oldMode is alarm: stop alarm
+  if (mode == MODE_ALARM) {
+    dfPlayer.command("sunriseAlarm/stopMusic", "");
+    ledStrip.command("sunriseAlarm/fadeTo", "#00000000");
+  }
+
+  mqtt.publish("sunriseAlarm/mode", (String)newMode);
   if (newMode == MODE_MENU) {
     //reset the menu state
     menu.initMenu();
@@ -188,8 +263,12 @@ void setMode(Mode newMode) {
     updateClock();
   } else if (newMode == MODE_SET_ALARM_HOURS || newMode == MODE_SET_ALARM_MINUTES) {
     //don't wait for next second: already set it now.
-    updateAlarm();
-  } 
+    updateSetAlarm();
+  } else if (newMode == MODE_ALARM) {
+    updateClock();
+    dfPlayer.command("sunriseAlarm/playNext", "");
+    ledStrip.command("sunriseAlarm/sunrise", "");
+  }
   mode = newMode;
   dotMatrix.underlineHours(mode == MODE_SET_ALARM_HOURS);
   dotMatrix.underlineMinutes(mode == MODE_SET_ALARM_MINUTES);
@@ -199,29 +278,33 @@ void loop() {
   //ArduinoOTA.handle();
   dotMatrix.loop();
   displayTime.loop();
-  
-  timerLDR.run();
-
   ota.loop();
   ledStrip.loop();
-  // colorWipe(strip.Color(cnt % 150,   40,   cnt % 39)     , 50); // Red
-  // cnt++;
-  // if (cnt > 10000) {
-  //   cnt = 0;
-  // }
+  dfPlayer.loop();
+  
+  timerLDR.run();
+  
+  if (mode != MODE_WIFI_STATUS) {
+    mqtt.loop();
+  }
+
+  if (displayTime.alarmGoesOff()) {
+    setMode(MODE_ALARM);
+  }
 
   switch (mode) {
     case MODE_WIFI_STATUS:
       updateWifiStatus();
       break;
     case MODE_CLOCK:
+    case MODE_ALARM:
       updateClock();
       break;
     case MODE_SET_ALARM_HOURS:
-      updateAlarm();
+      updateSetAlarm();
       break;
     case MODE_SET_ALARM_MINUTES:
-      updateAlarm();
+      updateSetAlarm();
       break;
     case MODE_MENU:
       if (menu.getActiveMenuItem()["id"] == "Root") {
@@ -237,7 +320,7 @@ void loop() {
   }
 
   //if menu is idle, go back to clock mode
-  if (mode != MODE_CLOCK && mode != MODE_WIFI_STATUS && rotaryButton.getSecondsIdle() > 8) {
+  if (mode != MODE_CLOCK && mode != MODE_ALARM && mode != MODE_WIFI_STATUS && rotaryButton.getSecondsIdle() > 8) {
     setMode(MODE_CLOCK);
   }
 
@@ -248,17 +331,21 @@ void loop() {
       String menuId = menu.commitMenu();
       Serial.println(F("menuId: "));
       Serial.println(menuId);
-      processCommand(menuId);
+      processMenuCommand(menuId);
     } else if (mode == MODE_SET_ALARM_HOURS) {
       setMode(MODE_SET_ALARM_MINUTES);
     } else if (mode == MODE_SET_ALARM_MINUTES) {
       setMode(MODE_MENU);
+    } else if (mode == MODE_ALARM) {
+      setMode(MODE_CLOCK);
     }
+    mqtt.publish("sunriseAlarm/rotaryButtonPressed", "mode: " + mode);
   }
 
   rotaryPosition = rotaryButton.getPosition();
   if (lastRotaryPosition != rotaryPosition) {
     //dotMatrix.showText(String(rotaryPosition));
+    mqtt.publish("sunriseAlarm/rotaryPosition", (String)rotaryPosition);
     if (mode == MODE_CLOCK) {
       setMode(MODE_MENU);
     } else if (mode == MODE_SET_ALARM_HOURS) {

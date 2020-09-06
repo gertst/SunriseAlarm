@@ -102,6 +102,7 @@ void DisplayTime::updateAlarmHours(int rotation) {
             alarmHour --;
         }
     }
+    alarmIsTriggered = false;
     EEPROM.write(EEPROM_ADDR_ALARM_HOURS, alarmHour);
     EEPROM.commit();
 }
@@ -113,14 +114,38 @@ void DisplayTime::updateAlarmMinutes(int rotation) {
             alarmMinute = 0;
         }
     } else {
-        if (alarmMinute == 0) {
+        if (alarmMinute <= 0) {
             alarmMinute = 55;
         } else {
             alarmMinute -= 5;
         }
     }
+    alarmIsTriggered = false;
     EEPROM.write(EEPROM_ADDR_ALARM_MINUTES, alarmMinute);
     EEPROM.commit();
+}
+
+bool DisplayTime::alarmGoesOff() {
+    
+    if (isAlarmOn) {
+
+        if (!alarmIsTriggered && alarmHour == ntp.hours() && alarmMinute == ntp.minutes() ) {
+            alarmIsTriggered = true;
+            //reset alarm once the exact alarm minute has passed
+            if (alarmMinute != ntp.minutes()) {
+                alarmIsTriggered = false;
+                return false;
+            } else {
+                return true;
+            }
+        } else {
+            return false;
+        }
+        
+    } else {
+        return false;
+    }
+    
 }
 
 /**
@@ -133,7 +158,7 @@ void DisplayTime::updateAlarmMinutes(int rotation) {
 String DisplayTime::getAlarmText(byte alarmMode) {
     String time;
     if (alarmHour < 10) {
-        time = time + "$"; //add space with size of a digit
+        time = time + "$"; //add space with size of a digit (the & sign is replaced with a space the size of a digit)
     }
     time = time + String(alarmHour) + ":";
     if (alarmMinute < 10) {
@@ -149,3 +174,15 @@ String DisplayTime::getAlarmText(byte alarmMode) {
 
     return time;
 }
+
+void DisplayTime::command(String topic, String msg) {
+    // if (topic == "alarmHour") {
+    //     this->updateAlarmHours(msg.toInt());
+    // } else if (topic == "alarmMinute") {
+    //     this->updateAlarmMinutes(msg.toInt());
+    // } else if (topic == "alarm") {
+    //     this->setIsAlarmOn(msg.toInt());
+    // }
+}
+
+

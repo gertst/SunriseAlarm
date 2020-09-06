@@ -20,6 +20,8 @@ class LedStrip
     Adafruit_NeoPixel strip; //warning: strip gets already initialized here!
     void setup();
     void loop();
+    void command(String topic, String msg);
+    void sunrise();
   
   private:
     int nrOfPixels;
@@ -28,11 +30,13 @@ class LedStrip
     void fadeTo(uint8_t pixelNumber, uint32_t color, uint32_t targetTime);
     pixelData_t pixelData[150];
     void updateFade();
+    void updateSunrise();
     uint8_t red(uint32_t color);
     uint8_t green(uint32_t color);
     uint8_t blue(uint32_t color);
     uint8_t white(uint32_t color);
-    
+    uint32_t nextSunriseMillis = 0;
+    uint32_t sunriseIndex = 9999999;
 };
 
 #endif
