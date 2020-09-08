@@ -83,7 +83,9 @@ void DotMatrix::loop()
   //alarm dot
   if (!textExceedsDisplay && refreshDot) {
     parola.getGraphicObject()->setPoint(0, 0, isAlarmOn);
-    //refreshDot = false;
+    parola.getGraphicObject()->setPoint(1, 0, isAlarmOn);
+    parola.getGraphicObject()->setPoint(1, 1, isAlarmOn);
+    parola.getGraphicObject()->setPoint(0, 1, isAlarmOn);
   }
 
   //underline?
