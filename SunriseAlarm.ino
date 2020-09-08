@@ -140,7 +140,7 @@ uint8_t intensity;
 void updateClock() {
   String newTime = displayTime.getTime();
   if (mode == MODE_ALARM) {
-    newTime = millis() % 500 > 0 ? newTime : "ALARM";
+    newTime = millis() % 1000 > 500 ? newTime : "ALARM";
     //newTime = "ALARM";
   }
   if (lastTime != newTime) {
@@ -312,7 +312,7 @@ void loop() {
       } else {
         String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
         if (menu.getActiveMenuItem()["id"] == "Alarm") { 
-          menuLabel = menuLabel + ": " + displayTime.getAlarmText(0);
+          menuLabel = displayTime.getAlarmText(0);
         }
         dotMatrix.showText(menuLabel);
       }
@@ -320,7 +320,7 @@ void loop() {
   }
 
   //if menu is idle, go back to clock mode
-  if (mode != MODE_CLOCK && mode != MODE_ALARM && mode != MODE_WIFI_STATUS && rotaryButton.getSecondsIdle() > 8) {
+  if (mode != MODE_CLOCK && mode != MODE_ALARM && mode != MODE_WIFI_STATUS && rotaryButton.getSecondsIdle() > 15) {
     setMode(MODE_CLOCK);
   }
 
