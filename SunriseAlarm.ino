@@ -22,10 +22,11 @@
 
 #include "Arduino.h"
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
-#include <SimpleTimer.h>
+#include <timer.h>
 #include <EEPROM.h>
 #include <Wire.h> //required by pin expander
 #include <Adafruit_MCP23017.h> //pin exapnder chip MCP23017
+#include <math.h>
 
 #include "OTA.h"
 #include "DotMatix.h"
@@ -34,7 +35,7 @@
 #include "Menu.h"
 #include "LedStrip.h"
 #include "Mqtt.h"
-#include "DFPlayer.h"
+// #include "DFPlayer.h"
 
 /* 
 static const uint8_t D0 = 16;
@@ -118,7 +119,7 @@ const char *password = "gertstogo1627";
 
 int rotaryPosition = 0;
 int lastRotaryPosition = 0;
-SimpleTimer timerLDR;
+Timer timerLDR;
 String lastTime = "";
 Mode mode;
 Mode lastMode;
@@ -133,15 +134,18 @@ DisplayTime displayTime;
 Menu menu;
 LedStrip ledStrip(LED_STRIP_PIN, NUMBER_OF_PIXELS_IN_LED_STRIP);
 Mqtt mqtt;
-DFPlayer dfPlayer(DFPlayer_RX_PIN, DFPlayer_TX_PIN);
+// DFPlayer dfPlayer(DFPlayer_RX_PIN, DFPlayer_TX_PIN);
 
 uint8_t intensity;
+float intensityIncrease = 10.0;
 
 void updateClock() {
   String newTime = displayTime.getTime();
   if (mode == MODE_ALARM) {
-    newTime = millis() % 1000 > 500 ? newTime : "ALARM";
-    //newTime = "ALARM";
+    if (millis() % 1000 > 500 ) {
+      newTime.replace(":", "|");
+      newTime.replace(" ", "|");
+    }
   }
   if (lastTime != newTime) {
     lastTime = newTime;
@@ -163,12 +167,29 @@ void updateWifiStatus() {
   }
 }
 
+long mapFloat(float x, float in_min, float in_max, float out_min, float out_max) {
+  return round((x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min);
+}
+
 void updateLDR() {
-  int ldrValue = analogRead(LDR_PIN); //0 - 1023
-  intensity = map(ldrValue, 0, 1023, 15, 0);
-  intensity = max(0, intensity - 1);
-  //mqtt.publish("sunriseAlarm/clockIntensity", (String)intensity);
-  dotMatrix.setIntensity(intensity); //0 - 15
+  int ldrValue = analogRead(LDR_PIN); //0 - 1024
+  int newIntensity = 1;
+  if (ldrValue < 1023) {
+    newIntensity = mapFloat((float)ldrValue, 0.0, 1024.0, 15.0, intensityIncrease);
+  }
+  
+  //higher intensity when not idle for 30 secs
+  newIntensity = rotaryButton.getSecondsIdle() < 30 ? newIntensity * 2  : newIntensity;
+  
+  //keep into limits
+  newIntensity = max(0, newIntensity);
+  newIntensity = min(15, newIntensity);
+
+  if (intensity != newIntensity) {
+    dotMatrix.setIntensity(newIntensity); //0 - 15
+    mqtt.publish("sunriseAlarm/intensity", (String)newIntensity);
+    intensity = newIntensity;
+  }
 }
 
 void setup() {
@@ -203,15 +224,19 @@ void setup() {
   menu.setup();
   ledStrip.setup();
   mqtt.setup();
-  dfPlayer.setup();
+  // dfPlayer.setup();
   // mqtt.subscribe("sunriseAlarm/#");
   mqtt.setCallback(mqttCallback);
 
   setMode(MODE_WIFI_STATUS);
 
-  timerLDR.setInterval(400, updateLDR);
-
+  timerLDR.setInterval(2000);
+  timerLDR.setCallback(updateLDR);
+  timerLDR.start();
+  
   dotMatrix.setAlarmDot(displayTime.getIsAlarmOn());
+
+  mqtt.publish("sunriseAlarm/started", "");
 
 }
 
@@ -223,7 +248,7 @@ void mqttCallback(String topic, String message) {
   ledStrip.command(topic, message);
   displayTime.command(topic, message);
   dotMatrix.command(topic, message);
-  dfPlayer.command(topic, message);
+  // dfPlayer.command(topic, message);
 
   if (topic == "sunriseAlarm/showAlarmHours") {
     setMode(MODE_SET_ALARM_HOURS);
@@ -231,6 +256,10 @@ void mqttCallback(String topic, String message) {
     setMode(MODE_SET_ALARM_MINUTES);
   } else if (topic == "sunriseAlarm/alarmOnOff") {
     processMenuCommand("AlarmOnOff");
+  } else if (topic == "sunriseAlarm/alarm") {
+    setMode(MODE_ALARM);
+  } else if (topic == "sunriseAlarm/intensityIncrease") {
+    intensityIncrease = message.toFloat();
   }
 }
 
@@ -240,7 +269,15 @@ void processMenuCommand(String command) {
     dotMatrix.setAlarmDot(displayTime.getIsAlarmOn());
   } else if (command == "SetAlarm") {
     setMode(MODE_SET_ALARM_HOURS);
-  }
+  } else if (command == "LightSunrise") {
+    ledStrip.command("sunriseAlarm/sunrise", "");
+  } else if (command == "LightWhite") {
+    ledStrip.command("sunriseAlarm/fadeTo", "#77FCD795");
+  } else if (command == "LightSoft") {
+    ledStrip.command("sunriseAlarm/fadeTo", "#7C4318");
+  } else if (command == "LightOff") {
+    ledStrip.command("sunriseAlarm/fadeTo", "#00000000");
+  } 
 }
 
 void setMode(Mode newMode) {
@@ -248,13 +285,14 @@ void setMode(Mode newMode) {
     return;
   }
 
+  mqtt.publish("sunriseAlarm/mode", (String)newMode);
+
   //if oldMode is alarm: stop alarm
   if (mode == MODE_ALARM) {
-    dfPlayer.command("sunriseAlarm/stopMusic", "");
+    // dfPlayer.command("sunriseAlarm/stopMusic", "");
     ledStrip.command("sunriseAlarm/fadeTo", "#00000000");
   }
 
-  mqtt.publish("sunriseAlarm/mode", (String)newMode);
   if (newMode == MODE_MENU) {
     //reset the menu state
     menu.initMenu();
@@ -266,7 +304,8 @@ void setMode(Mode newMode) {
     updateSetAlarm();
   } else if (newMode == MODE_ALARM) {
     updateClock();
-    dfPlayer.command("sunriseAlarm/playNext", "");
+    // dfPlayer.command("sunriseAlarm/volumeRaiseTo", "30");
+    // dfPlayer.command("sunriseAlarm/play", "1");
     ledStrip.command("sunriseAlarm/sunrise", "");
   }
   mode = newMode;
@@ -280,9 +319,10 @@ void loop() {
   displayTime.loop();
   ota.loop();
   ledStrip.loop();
-  dfPlayer.loop();
+  // dfPlayer.loop();
   
-  timerLDR.run();
+  
+  timerLDR.update();
   
   if (mode != MODE_WIFI_STATUS) {
     mqtt.loop();

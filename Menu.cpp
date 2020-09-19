@@ -8,7 +8,7 @@ void Menu::setup() {
      * REMARK: the menu.json file is NOT used! It's there as a source to
      * build the below json string. To do that, use https://arduinojson.org/v6/assistant/
     **/
-    const char* jsonString = "{\"label\":\"Menu\",\"id\":\"Root\",\"items\":[{\"id\":\"Alarm\",\"label\":\"Alarm\",\"items\":[{\"id\":\"AlarmOnOff\",\"label\":\"On|Off\",\"back\":0},{\"id\":\"SetAlarm\",\"label\":\"Set\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"label\":\"Light\",\"items\":[{\"id\":\"LightOn\",\"label\":\"On\"},{\"id\":\"LightOff\",\"label\":\"Off\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"id\":\"Back\",\"label\":\"Back\"}]}";
+    const char* jsonString = "{\"label\":\"Menu\",\"id\":\"Root\",\"items\":[{\"id\":\"Alarm\",\"label\":\"Alarm\",\"items\":[{\"id\":\"AlarmOnOff\",\"label\":\"On|Off\",\"back\":0},{\"id\":\"SetAlarm\",\"label\":\"Set\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"label\":\"Light\",\"items\":[{\"id\":\"LightSunrise\",\"label\":\"Sunrise\"},{\"id\":\"LightWhite\",\"label\":\"White\"},{\"id\":\"LightSoft\",\"label\":\"Soft\"},{\"id\":\"LightOff\",\"label\":\"Off\"},{\"id\":\"Back\",\"label\":\"Back\"}]},{\"id\":\"Back\",\"label\":\"Back\"}]}";
 
     DeserializationError error = deserializeJson(json, jsonString);
     if (error) {

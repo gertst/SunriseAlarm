@@ -3,6 +3,7 @@
         "queue": "cpp",
         "stack": "cpp",
         "random": "cpp",
-        "functional": "cpp"
+        "functional": "cpp",
+        "map": "cpp"
     }
 }

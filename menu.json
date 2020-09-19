@@ -25,12 +25,20 @@
          "label": "Light", 
          "items": [
             {
-               "id": "LightOn", 
-               "label": "On"
+               "id": "Sunrise", 
+               "label": "LightSunrise"
             },
             {
-               "id": "LightOff", 
-               "label": "Off"
+               "id": "White", 
+               "label": "LightWhite"
+            },
+            {
+               "id": "Soft", 
+               "label": "LightSoft"
+            },
+            {
+               "id": "Off", 
+               "label": "LightOff"
             },
             {
                "id": "Back", 

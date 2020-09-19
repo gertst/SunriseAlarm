@@ -21,6 +21,7 @@ uint8_t dig8[] = {	5, 54, 127, 73, 127, 54 }; 	// 40 - '8'
 uint8_t dig9[] = {	5, 6, 79, 73, 127, 62 }; 	// 41 - '9'
 
 uint8_t digitSpace[] = { 5, 0, 0, 0, 0, 0 }; 
+uint8_t pipe[] = {2, 56, 56}; 	// 124Pipe
 
 
 void DotMatrix::setup()
@@ -37,6 +38,7 @@ void DotMatrix::setup()
   parola.addChar('8', dig8);
   parola.addChar('9', dig9);
   parola.addChar('$', digitSpace);
+  parola.addChar('|', pipe);
 
   parola.displayClear();
   parola.displaySuspend(false);

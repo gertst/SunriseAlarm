@@ -24,7 +24,10 @@ class DFPlayer
     SoftwareSerial softwareSerial;
     DFPlayerMini_Fast dfPlayer;
     bool isStarted = false;
-    
+    uint8_t volumeTarget = 0;
+    void increaseVolume();
+    uint32_t timerTrigger = 0;
+    uint8_t volume = 0;
     
 };
 

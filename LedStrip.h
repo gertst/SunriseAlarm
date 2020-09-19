@@ -37,6 +37,7 @@ class LedStrip
     uint8_t white(uint32_t color);
     uint32_t nextSunriseMillis = 0;
     uint32_t sunriseIndex = 9999999;
+    bool initDone = false;
 };
 
 #endif
