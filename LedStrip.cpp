@@ -183,3 +183,23 @@ void LedStrip::updateSunrise() {
 void LedStrip::sunrise() {
     this->sunriseIndex = 0;
 }
+
+LightScene LedStrip::getCurrentLightScene() {
+    return lightScenes[currentScene];
+}
+
+void LedStrip::setNextOrPreviousLightScene(int rotation) {
+    uint8_t size = sizeof(lightScenes)/sizeof(lightScenes[0]);
+    if (rotation > 0) {
+        currentScene++;
+        if (currentScene >= size) {
+            currentScene = 0;
+        }
+    } else {
+        if (currentScene == 0) {
+            currentScene = size - 1;
+        } else {
+            currentScene--;
+        }
+    }
+}

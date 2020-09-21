@@ -90,9 +90,13 @@ void DotMatrix::loop()
     parola.getGraphicObject()->setPoint(0, 1, isAlarmOn);
   }
 
-  //underline?
   if (!textExceedsDisplay && hoursUnderlined) {
-    if (((long)roundf(millis()/100) % 20 > 10)) {
+    //remove minutes line
+    for (uint8_t i = 0; i < 12; i++) {
+        parola.getGraphicObject()->setPoint(7, 3 + i, 0);
+      }
+    //blink hours line
+    if (millis() % 500 > 250 ) {
       for (uint8_t i = 0; i < 11; i++) {
         parola.getGraphicObject()->setPoint(7, 18 + i, 1);
       }
@@ -103,7 +107,12 @@ void DotMatrix::loop()
     } 
   } 
   if (!textExceedsDisplay && minutesUnderlined) {
-    if (((long)roundf(millis()/100) % 20 > 10)) {
+    //remove hours line
+    for (uint8_t i = 0; i < 12; i++) {
+      parola.getGraphicObject()->setPoint(7, 18 + i, 0);
+    }
+    //blink minutes line
+    if (millis() % 500 > 250 ) {
       for (uint8_t i = 0; i < 11; i++) {
         parola.getGraphicObject()->setPoint(7, 3 + i, 1);
       }

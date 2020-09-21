@@ -11,6 +11,11 @@ struct pixelData_t {
   uint32_t targetTime; //time in milliseconds past 1970 when color should be reached
 };
 
+struct LightScene {
+  String label;
+  String hex;
+};
+
 class LedStrip
 {
   public:
@@ -22,6 +27,8 @@ class LedStrip
     void loop();
     void command(String topic, String msg);
     void sunrise();
+    LightScene getCurrentLightScene();
+    void setNextOrPreviousLightScene(int rotation);
   
   private:
     int nrOfPixels;
@@ -38,6 +45,12 @@ class LedStrip
     uint32_t nextSunriseMillis = 0;
     uint32_t sunriseIndex = 9999999;
     bool initDone = false;
+    LightScene lightScenes[3] = {
+      {"Off",    "#00000000"},
+      {"Soft",   "#007C4318"},
+      {"White",  "#77FCD795"}
+    };
+    uint8_t currentScene = 0;
 };
 
 #endif

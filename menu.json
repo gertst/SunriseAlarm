@@ -3,48 +3,8 @@
    "id": "Root",
    "items": [
       {
-         "id": "Alarm",
-         "label": "Alarm", 
-         "items": [
-            {
-               "id": "AlarmOnOff", 
-               "label": "On|Off",
-               "back": 0
-            },
-            {
-               "id": "SetAlarm", 
-               "label": "Set"
-            },
-            {
-               "id": "Back", 
-               "label": "Back"
-            }
-         ]
-      },
-      {
          "label": "Light", 
-         "items": [
-            {
-               "id": "Sunrise", 
-               "label": "LightSunrise"
-            },
-            {
-               "id": "White", 
-               "label": "LightWhite"
-            },
-            {
-               "id": "Soft", 
-               "label": "LightSoft"
-            },
-            {
-               "id": "Off", 
-               "label": "LightOff"
-            },
-            {
-               "id": "Back", 
-               "label": "Back"
-            }
-         ]
+         "id": "Light"
       },
       {
          "id": "Back", 

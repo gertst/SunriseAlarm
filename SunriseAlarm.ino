@@ -103,8 +103,10 @@ enum Mode {
   MODE_CLOCK,
   MODE_SET_ALARM_HOURS,
   MODE_SET_ALARM_MINUTES,
+  MODE_SET_ALARM_TOGGLE,
   MODE_MENU,
-  MODE_ALARM
+  MODE_ALARM,
+  MODE_SET_LIGHT_SCENE
 };
 
 
@@ -157,6 +159,14 @@ void updateSetAlarm() {
   dotMatrix.showText(displayTime.getAlarmText(mode == MODE_SET_ALARM_HOURS ? 1 : 2));
 }
 
+void showAlarmToggle() {
+  if (displayTime.getIsAlarmOn()) {
+    dotMatrix.showText("On");
+  } else {
+    dotMatrix.showText("Off");
+  }
+}
+
 void updateWifiStatus() {
   //go to wifi mode if wifi not OK and return to last mode once wifi is OK
   String wifiStatus = displayTime.getWifiStatus();
@@ -179,7 +189,7 @@ void updateLDR() {
   }
   
   //higher intensity when not idle for 30 secs
-  newIntensity = rotaryButton.getSecondsIdle() < 30 ? newIntensity * 2  : newIntensity;
+  newIntensity = rotaryButton.getSecondsIdle() < 30 ? (newIntensity + 1) * 2  : newIntensity;
   
   //keep into limits
   newIntensity = max(0, newIntensity);
@@ -264,20 +274,16 @@ void mqttCallback(String topic, String message) {
 }
 
 void processMenuCommand(String command) {
-  if (command == "AlarmOnOff") {
-    displayTime.setIsAlarmOn(!displayTime.getIsAlarmOn());
-    dotMatrix.setAlarmDot(displayTime.getIsAlarmOn());
-  } else if (command == "SetAlarm") {
-    setMode(MODE_SET_ALARM_HOURS);
-  } else if (command == "LightSunrise") {
-    ledStrip.command("sunriseAlarm/sunrise", "");
-  } else if (command == "LightWhite") {
-    ledStrip.command("sunriseAlarm/fadeTo", "#77FCD795");
-  } else if (command == "LightSoft") {
-    ledStrip.command("sunriseAlarm/fadeTo", "#7C4318");
-  } else if (command == "LightOff") {
-    ledStrip.command("sunriseAlarm/fadeTo", "#00000000");
+  if (command == "Light") {
+    setMode(MODE_SET_LIGHT_SCENE);
   } 
+  // else if (command == "LightWhite") {
+  //   ledStrip.command("sunriseAlarm/fadeTo", "#77FCD795");
+  // } else if (command == "LightSoft") {
+  //   ledStrip.command("sunriseAlarm/fadeTo", "#7C4318");
+  // } else if (command == "LightOff") {
+  //   ledStrip.command("sunriseAlarm/fadeTo", "#00000000");
+  // } 
 }
 
 void setMode(Mode newMode) {
@@ -307,7 +313,11 @@ void setMode(Mode newMode) {
     // dfPlayer.command("sunriseAlarm/volumeRaiseTo", "30");
     // dfPlayer.command("sunriseAlarm/play", "1");
     ledStrip.command("sunriseAlarm/sunrise", "");
-  }
+  } else if (newMode == MODE_SET_ALARM_TOGGLE) {
+    showAlarmToggle();
+  } else if (newMode == MODE_SET_LIGHT_SCENE) {
+    dotMatrix.showText(ledStrip.getCurrentLightScene().label);
+  } 
   mode = newMode;
   dotMatrix.underlineHours(mode == MODE_SET_ALARM_HOURS);
   dotMatrix.underlineMinutes(mode == MODE_SET_ALARM_MINUTES);
@@ -346,6 +356,9 @@ void loop() {
     case MODE_SET_ALARM_MINUTES:
       updateSetAlarm();
       break;
+    case MODE_SET_ALARM_TOGGLE:
+      showAlarmToggle();
+      break;
     case MODE_MENU:
       if (menu.getActiveMenuItem()["id"] == "Root") {
         setMode(MODE_CLOCK);
@@ -357,6 +370,9 @@ void loop() {
         dotMatrix.showText(menuLabel);
       }
       break;
+    case MODE_SET_LIGHT_SCENE:
+      //dotMatrix.showText(ledStrip.getCurrentLightScene().label);
+      break;
   }
 
   //if menu is idle, go back to clock mode
@@ -366,7 +382,7 @@ void loop() {
 
   if (rotaryButton.getIsButtonPressed()) {
     if (mode == MODE_CLOCK) {
-      setMode(MODE_MENU);
+      setMode(MODE_SET_ALARM_HOURS);
     } else if (mode == MODE_MENU) {
       String menuId = menu.commitMenu();
       Serial.println(F("menuId: "));
@@ -375,8 +391,12 @@ void loop() {
     } else if (mode == MODE_SET_ALARM_HOURS) {
       setMode(MODE_SET_ALARM_MINUTES);
     } else if (mode == MODE_SET_ALARM_MINUTES) {
-      setMode(MODE_MENU);
+      setMode(MODE_SET_ALARM_TOGGLE);
+    } else if (mode == MODE_SET_ALARM_TOGGLE) {
+      setMode(MODE_CLOCK);
     } else if (mode == MODE_ALARM) {
+      setMode(MODE_CLOCK);
+    } else if (mode == MODE_SET_LIGHT_SCENE) {
       setMode(MODE_CLOCK);
     }
     mqtt.publish("sunriseAlarm/rotaryButtonPressed", "mode: " + mode);
@@ -392,6 +412,13 @@ void loop() {
       displayTime.updateAlarmHours(rotaryPosition - lastRotaryPosition);
     } else if (mode == MODE_SET_ALARM_MINUTES) {
       displayTime.updateAlarmMinutes(rotaryPosition - lastRotaryPosition);
+    } else if (mode == MODE_SET_ALARM_TOGGLE) {
+      displayTime.setIsAlarmOn(!displayTime.getIsAlarmOn());
+      dotMatrix.setAlarmDot(displayTime.getIsAlarmOn()); 
+    } else if (mode == MODE_SET_LIGHT_SCENE) {
+      ledStrip.setNextOrPreviousLightScene(rotaryPosition - lastRotaryPosition);
+      dotMatrix.showText(ledStrip.getCurrentLightScene().label);
+      ledStrip.command("sunriseAlarm/fadeTo", ledStrip.getCurrentLightScene().hex);
     } else {
       menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     }
