@@ -144,7 +144,7 @@ float intensityIncrease = 10.0;
 void updateClock() {
   String newTime = displayTime.getTime();
   if (mode == MODE_ALARM) {
-    if (millis() % 1000 > 500 ) {
+    if (millis() % 500 > 250 ) {
       newTime.replace(":", "|");
       newTime.replace(" ", "|");
     }
@@ -405,7 +405,7 @@ void loop() {
   rotaryPosition = rotaryButton.getPosition();
   if (lastRotaryPosition != rotaryPosition) {
     //dotMatrix.showText(String(rotaryPosition));
-    mqtt.publish("sunriseAlarm/rotaryPosition", (String)rotaryPosition);
+    //mqtt.publish("sunriseAlarm/rotaryPosition", (String)rotaryPosition);
     if (mode == MODE_CLOCK) {
       setMode(MODE_MENU);
     } else if (mode == MODE_SET_ALARM_HOURS) {
