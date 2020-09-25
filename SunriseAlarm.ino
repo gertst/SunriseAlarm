@@ -270,6 +270,8 @@ void mqttCallback(String topic, String message) {
     setMode(MODE_ALARM);
   } else if (topic == "sunriseAlarm/intensityIncrease") {
     intensityIncrease = message.toFloat();
+  } else if (topic == "sunriseAlarm/ping") {
+    mqtt.publish("sunriseAlarm/pong", displayTime.getTime());
   }
 }
 

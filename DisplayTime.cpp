@@ -5,6 +5,10 @@
 #include <WiFiUdp.h>
 #include <NTP.h> //https://github.com/sstaub/NTP
 #include <EEPROM.h>
+#include "Mqtt.h"
+
+// This line says to use the same gMyEventMgr defined elsewhere (in Main.cpp in this case)
+extern Mqtt mqtt;
 
 #define EEPROM_ADDR_ALARM_ON_OFF 0
 #define EEPROM_ADDR_ALARM_HOURS 1
@@ -37,13 +41,17 @@ void DisplayTime::loop() {
         Serial.print("IP address:\t");
         Serial.println(WiFi.localIP());
 
+        // ntp.ntpServer("time.google.com");
+        // ntp.ntpServer("time.cloudflare.com");
+
         //define the start of summertime for Central Europe
         ntp.ruleDST("CEST", Last, Sun, Mar, 2, 2 * 60); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
         //define the standard time for Central Europe
         ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
-        ntp.updateInterval(60 * 60 * 1000); //each hour
-        ntp.begin();
+        ntp.updateInterval(25 * 60 * 1000); //each 25 mins
+        ntp.begin(false); //false = don't block if error
         Serial.println("NTP init");
+
     } 
     
     ntp.update();
@@ -75,6 +83,10 @@ String DisplayTime::getTime()
         time = time + "0";
     }
     time = time + String(ntp.minutes());
+    if (ntp.minutes() != lastMinutes) {
+        mqtt.publish("sunriseAlarm/npt/time", time);
+        lastMinutes = ntp.minutes();
+    }
     return time;
 }
 
@@ -176,13 +188,16 @@ String DisplayTime::getAlarmText(byte alarmMode) {
 }
 
 void DisplayTime::command(String topic, String msg) {
-    // if (topic == "alarmHour") {
-    //     this->updateAlarmHours(msg.toInt());
-    // } else if (topic == "alarmMinute") {
-    //     this->updateAlarmMinutes(msg.toInt());
-    // } else if (topic == "alarm") {
-    //     this->setIsAlarmOn(msg.toInt());
-    // }
+    if (topic == "sunriseAlarm/alarmHour") {
+        this->updateAlarmHours(msg.toInt());
+    } else if (topic == "sunriseAlarm/alarmMinute") {
+        this->updateAlarmMinutes(msg.toInt());
+    } else if (topic == "sunriseAlarm/timeOffset") {
+        uint8_t hours = msg.substring(0, msg.indexOf(":")).toInt();
+        uint8_t minutes = msg.substring(msg.indexOf(":") + 1).toInt();
+        ntp.offset(0, hours, minutes, 0);
+        mqtt.publish("sunriseAlarm/timeOffsetResponse", "hours: " + (String)hours + ", minutes:" + (String)minutes + ", new Time: " + getTime());
+    }
 }
 
 

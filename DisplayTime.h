@@ -23,6 +23,7 @@ class DisplayTime
     bool alarmIsTriggered = false;
     byte alarmHour = 6;
     byte alarmMinute = 50;
+    int8_t lastMinutes;
 };
 
 #endif
