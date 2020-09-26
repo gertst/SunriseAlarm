@@ -82,8 +82,8 @@ void LedStrip::fadeTo(uint8_t pixelNumber, uint32_t color, uint32_t targetTime) 
     
     pixelData[pixelNumber].startColor = strip.getPixelColor(pixelNumber);
     pixelData[pixelNumber].targetColor = strip.gamma32(color);
-    pixelData[pixelNumber].startTime = millis();
-    pixelData[pixelNumber].targetTime = targetTime;
+    pixelData[pixelNumber].startTime = millis() + (100 * pixelNumber);
+    pixelData[pixelNumber].targetTime = targetTime + (100 * pixelNumber);
 }
 
 void LedStrip::updateFade() {
@@ -101,15 +101,18 @@ void LedStrip::updateFade() {
                 isChanged = true;
             }
         } else {
-            //map syntax: map(value, fromLow, fromHigh, toLow, toHigh)
-            redValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, red(pixelData[i].startColor), red(pixelData[i].targetColor));
-            greenValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, green(pixelData[i].startColor), green(pixelData[i].targetColor));
-            blueValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, blue(pixelData[i].startColor), blue(pixelData[i].targetColor));
-            whiteValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, white(pixelData[i].startColor), white(pixelData[i].targetColor));
-            uint32_t newColor = strip.Color(redValue, greenValue, blueValue, whiteValue);
-            if (strip.getPixelColor(i) != newColor) {
-                strip.setPixelColor(i, newColor);
-                isChanged = true;
+            //startTime passed? Yes
+            if (pixelData[i].startTime <= millis()) {
+                //map syntax: map(value, fromLow, fromHigh, toLow, toHigh)
+                redValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, red(pixelData[i].startColor), red(pixelData[i].targetColor));
+                greenValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, green(pixelData[i].startColor), green(pixelData[i].targetColor));
+                blueValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, blue(pixelData[i].startColor), blue(pixelData[i].targetColor));
+                whiteValue = map(millis(),pixelData[i].startTime, pixelData[i].targetTime, white(pixelData[i].startColor), white(pixelData[i].targetColor));
+                uint32_t newColor = strip.Color(redValue, greenValue, blueValue, whiteValue);
+                if (strip.getPixelColor(i) != newColor) {
+                    strip.setPixelColor(i, newColor);
+                    isChanged = true;
+                }
             }
         }
     }

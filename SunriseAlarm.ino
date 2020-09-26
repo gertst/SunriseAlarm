@@ -35,6 +35,7 @@
 #include "Menu.h"
 #include "LedStrip.h"
 #include "Mqtt.h"
+// #include "Http.h"
 // #include "DFPlayer.h"
 
 /* 
@@ -125,10 +126,10 @@ Timer timerLDR;
 String lastTime = "";
 Mode mode;
 Mode lastMode;
+uint8_t lastWifiStatus;
 
 // Instance of MCP23017 library
 Adafruit_MCP23017 pinExpander;
-
 OTA ota;
 DotMatrix dotMatrix(MAX_DEVICES, HARDWARE_TYPE, CLK_PIN, DATA_PIN, CS_PIN);
 RotaryButton rotaryButton(ENCODER_A_PIN, ENCODER_B_PIN, SWITCH_PIN);
@@ -169,10 +170,18 @@ void showAlarmToggle() {
 
 void updateWifiStatus() {
   //go to wifi mode if wifi not OK and return to last mode once wifi is OK
-  String wifiStatus = displayTime.getWifiStatus();
-  dotMatrix.showText(wifiStatus);
+  if (lastWifiStatus != WiFi.status()) {
+    switch (WiFi.status()) {
+        case WL_IDLE_STATUS: dotMatrix.showText("Wifi idle"); break;
+        case WL_NO_SSID_AVAIL: dotMatrix.showText("No SSID available"); break;
+        case WL_CONNECTED: dotMatrix.showText("OK"); break;
+        case WL_CONNECT_FAILED: dotMatrix.showText("Wifi connection failed"); break;
+        case WL_DISCONNECTED: dotMatrix.showText("Wifi ..."); break;
+    }
+    lastWifiStatus = WiFi.status();
+  }
 
-  if (wifiStatus == "OK") {
+  if (WiFi.status() == WL_CONNECTED) {
     setMode(MODE_CLOCK);
   }
 }
@@ -202,6 +211,10 @@ void updateLDR() {
   }
 }
 
+
+/*******************
+ ****   SETUP    ***
+ *******************/
 void setup() {
 
 /// change pin to gpio pins - IMPORTANT: Serial monitor will NOT work anymore with this code
@@ -231,6 +244,7 @@ void setup() {
 
   ota.setup();
   displayTime.setup();
+  displayTime.updateTime(millis());
   menu.setup();
   ledStrip.setup();
   mqtt.setup();
@@ -245,8 +259,6 @@ void setup() {
   timerLDR.start();
   
   dotMatrix.setAlarmDot(displayTime.getIsAlarmOn());
-
-  mqtt.publish("sunriseAlarm/started", "");
 
 }
 
@@ -325,6 +337,10 @@ void setMode(Mode newMode) {
   dotMatrix.underlineMinutes(mode == MODE_SET_ALARM_MINUTES);
 }
 
+
+/*******************
+ ****   LOOP    ****
+ *******************/
 void loop() {
   //ArduinoOTA.handle();
   dotMatrix.loop();

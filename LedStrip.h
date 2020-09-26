@@ -45,10 +45,13 @@ class LedStrip
     uint32_t nextSunriseMillis = 0;
     uint32_t sunriseIndex = 9999999;
     bool initDone = false;
-    LightScene lightScenes[3] = {
-      {"Off",    "#00000000"},
-      {"Soft",   "#007C4318"},
-      {"White",  "#77FCD795"}
+    LightScene lightScenes[6] = {
+      {"Off",     "#00000000"},
+      {"Soft",    "#007C4318"},
+      {"Cyan",    "#002a727f"},
+      {"Red",     "#007c0018"},
+      {"Orange",  "#009e5721"},
+      {"White",   "#77FCD795"}
     };
     uint8_t currentScene = 0;
 };

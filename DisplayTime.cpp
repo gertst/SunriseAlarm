@@ -1,10 +1,9 @@
 #include "DisplayTime.h"
 #include "Arduino.h"
 
-#include <ESP8266WiFi.h> 
-#include <WiFiUdp.h>
-#include <NTP.h> //https://github.com/sstaub/NTP
 #include <EEPROM.h>
+#include <Time.h>
+#include <TimeLib.h>
 #include "Mqtt.h"
 
 // This line says to use the same gMyEventMgr defined elsewhere (in Main.cpp in this case)
@@ -14,49 +13,29 @@ extern Mqtt mqtt;
 #define EEPROM_ADDR_ALARM_HOURS 1
 #define EEPROM_ADDR_ALARM_MINUTES 2
 
-WiFiUDP wifiUdp;
-NTP ntp(wifiUdp);
-
-bool wifiOK = false;
-
-void pollForWifi() {
-  Serial.print("wifi status:");
-  Serial.println(WiFi.status());
-}
-
-
 void DisplayTime::setup() {
     isAlarmOn = (bool) EEPROM.read(EEPROM_ADDR_ALARM_ON_OFF);
     alarmHour = EEPROM.read(EEPROM_ADDR_ALARM_HOURS);
     alarmMinute = EEPROM.read(EEPROM_ADDR_ALARM_MINUTES);
 }
 
+void DisplayTime::updateTime(uint32_t millis_) {
+ setTime(millis_);
+}
+
+byte DisplayTime::seconds() {
+    return second(); 
+}
+
+byte DisplayTime::minutes() {
+    return minute();
+}
+
+byte DisplayTime::hours() {
+    return hour();
+}
+
 void DisplayTime::loop() {
-
-    if (!wifiOK && WiFi.status() == WL_CONNECTED) {
-        wifiOK = true;
-
-        Serial.print("Connected to ");
-        Serial.println(WiFi.SSID());     
-        Serial.print("IP address:\t");
-        Serial.println(WiFi.localIP());
-
-        // ntp.ntpServer("time.google.com");
-        // ntp.ntpServer("time.cloudflare.com");
-
-        //define the start of summertime for Central Europe
-        ntp.ruleDST("CEST", Last, Sun, Mar, 2, 2 * 60); // last sunday in march 2:00, timetone +120min (+1 GMT + 1h summertime offset)
-        //define the standard time for Central Europe
-        ntp.ruleSTD("CET", Last, Sun, Oct, 3, 60); // last sunday in october 3:00, timezone +60min (+1 GMT)
-        ntp.updateInterval(25 * 60 * 1000); //each 25 mins
-        ntp.begin(false); //false = don't block if error
-        Serial.println("NTP init");
-
-    } 
-    
-    ntp.update();
-
-    //return wifiOK && ntpOK;
 
 }
 
@@ -73,32 +52,21 @@ void DisplayTime::setIsAlarmOn(bool value) {
 String DisplayTime::getTime()
 {
     
-    String time = String(ntp.hours());
-    if (ntp.seconds() % 2) {
+    String time = String(hours());
+    if (seconds() % 2) {
         time = time + ":" ;
     } else {
         time = time + " " ;
     }
-    if (ntp.minutes() < 10) {
+    if (minutes() < 10) {
         time = time + "0";
     }
-    time = time + String(ntp.minutes());
-    if (ntp.minutes() != lastMinutes) {
+    time = time + String(minutes());
+    if (minutes() != lastMinutes) {
         mqtt.publish("sunriseAlarm/npt/time", time);
-        lastMinutes = ntp.minutes();
+        lastMinutes = minutes();
     }
     return time;
-}
-
-String DisplayTime::getWifiStatus() {
-    //Serial.println(ntp.year());
-    switch (WiFi.status()) {
-        case WL_IDLE_STATUS: return "Wifi idle";
-        case WL_NO_SSID_AVAIL: return "No SSID available";
-        case WL_CONNECTED: return "OK"; //don't change, used for checking when ready
-        case WL_CONNECT_FAILED: return "Wifi connection failed";
-        case WL_DISCONNECTED: return "Wifi ...";
-    }
 }
 
 void DisplayTime::updateAlarmHours(int rotation) {
@@ -141,10 +109,10 @@ bool DisplayTime::alarmGoesOff() {
     
     if (isAlarmOn) {
 
-        if (!alarmIsTriggered && alarmHour == ntp.hours() && alarmMinute == ntp.minutes() ) {
+        if (!alarmIsTriggered && alarmHour == hours() && alarmMinute == minutes() ) {
             alarmIsTriggered = true;
             //reset alarm once the exact alarm minute has passed
-            if (alarmMinute != ntp.minutes()) {
+            if (alarmMinute != minutes()) {
                 alarmIsTriggered = false;
                 return false;
             } else {
@@ -178,7 +146,7 @@ String DisplayTime::getAlarmText(byte alarmMode) {
     }
     time = time + String(alarmMinute);
 
-    // if (alarmMode == 0 || ntp.seconds() % 2) {
+    // if (alarmMode == 0 || 
     //     return time;
     // } else {
     //     return "--:--";
@@ -192,12 +160,9 @@ void DisplayTime::command(String topic, String msg) {
         this->updateAlarmHours(msg.toInt());
     } else if (topic == "sunriseAlarm/alarmMinute") {
         this->updateAlarmMinutes(msg.toInt());
-    } else if (topic == "sunriseAlarm/timeOffset") {
-        uint8_t hours = msg.substring(0, msg.indexOf(":")).toInt();
-        uint8_t minutes = msg.substring(msg.indexOf(":") + 1).toInt();
-        ntp.offset(0, hours, minutes, 0);
-        mqtt.publish("sunriseAlarm/timeOffsetResponse", "hours: " + (String)hours + ", minutes:" + (String)minutes + ", new Time: " + getTime());
-    }
+    } else if (topic == "sunriseAlarm/updateTime") {
+        this->updateTime(msg.toInt());
+    } 
 }
 
 

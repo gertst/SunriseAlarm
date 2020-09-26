@@ -8,7 +8,6 @@ class DisplayTime
   public:
     void setup();
     String getTime();
-    String getWifiStatus();
     void loop();
     bool getIsAlarmOn();
     void setIsAlarmOn(bool value);
@@ -17,13 +16,18 @@ class DisplayTime
     String getAlarmText(byte alarmMode);
     bool alarmGoesOff();
     void command(String topic, String msg);
-  
+    void updateTime(uint32_t millis_);
+    byte seconds();
+    byte minutes();
+    byte hours();
+    
   private:
     bool isAlarmOn = false;
     bool alarmIsTriggered = false;
     byte alarmHour = 6;
     byte alarmMinute = 50;
     int8_t lastMinutes;
+    long startMillis = millis();
 };
 
 #endif

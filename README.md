@@ -11,7 +11,7 @@ The SunriseAlarm can send and receive commmands using MQTT, so remote control is
 
 1.  ESP8266 NodeMCU LUA CP2102 ESP-12E Internet WiFi Development Board, 5.8$
     The nodeMCU ESP8266 is the brain of my Sunrise alarm clock. 
-    It's connected to the internet and gets the exact time from a DST service.
+    It's connected to the internet and gets its time from an Mqtt request that returns the exact local time.
 
 2.  DAOKI MAX7219 Dot led Matrix MCU 8x32 Control LED Display Module Drive, 12.4$
     A Led dotmatix is used to show the digital clock and to show the menu items for the settings menu.

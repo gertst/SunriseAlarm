@@ -17,6 +17,7 @@ class Mqtt
     void setCallback(std::function<void(String, String)> callback);
     void publish(String topic, String payload);
     // void subscribe(String topic);
+    uint32_t lastTimeSync = 0;
   
   private:
     WiFiClient wifiClient;

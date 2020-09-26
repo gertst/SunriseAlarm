@@ -4,6 +4,7 @@
         "stack": "cpp",
         "random": "cpp",
         "functional": "cpp",
-        "map": "cpp"
+        "map": "cpp",
+        "cstddef": "cpp"
     }
 }
