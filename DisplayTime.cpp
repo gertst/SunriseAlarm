@@ -6,7 +6,6 @@
 #include <TimeLib.h>
 #include "Mqtt.h"
 
-// This line says to use the same gMyEventMgr defined elsewhere (in Main.cpp in this case)
 extern Mqtt mqtt;
 
 #define EEPROM_ADDR_ALARM_ON_OFF 0
@@ -63,46 +62,56 @@ String DisplayTime::getTime()
     }
     time = time + String(minutes());
     if (minutes() != lastMinutes) {
-        mqtt.publish("sunriseAlarm/npt/time", time);
+        //mqtt.publish("sunriseAlarm/npt/time", time);
         lastMinutes = minutes();
     }
     return time;
 }
 
-void DisplayTime::updateAlarmHours(int rotation) {
-    if (rotation > 0) {
-        alarmHour ++;
-        if (alarmHour > 23) {
-            alarmHour = 0;
-        }
+void DisplayTime::updateAlarmHours(int rotation, bool isAbsolute) {
+    if (isAbsolute) {
+        alarmHour = rotation;
     } else {
-        if (alarmHour == 0) {
-            alarmHour = 23;
+        if (rotation > 0) {
+            alarmHour ++;
+            if (alarmHour > 23) {
+                alarmHour = 0;
+            }
         } else {
-            alarmHour --;
+            if (alarmHour == 0) {
+                alarmHour = 23;
+            } else {
+                alarmHour --;
+            }
         }
     }
     alarmIsTriggered = false;
     EEPROM.write(EEPROM_ADDR_ALARM_HOURS, alarmHour);
     EEPROM.commit();
+    mqtt.publish("sunriseAlarm/alarmHour", (String)alarmHour, true);
 }
 
-void DisplayTime::updateAlarmMinutes(int rotation) {
-    if (rotation > 0) {
-        alarmMinute += 5;
-        if (alarmMinute > 55) {
-            alarmMinute = 0;
-        }
+void DisplayTime::updateAlarmMinutes(int rotation, bool isAbsolute) {
+    if (isAbsolute) {
+        alarmMinute = rotation;
     } else {
-        if (alarmMinute <= 0) {
-            alarmMinute = 55;
+        if (rotation > 0) {
+            alarmMinute += 5;
+            if (alarmMinute > 55) {
+                alarmMinute = 0;
+            }
         } else {
-            alarmMinute -= 5;
+            if (alarmMinute <= 0) {
+                alarmMinute = 55;
+            } else {
+                alarmMinute -= 5;
+            }
         }
     }
     alarmIsTriggered = false;
     EEPROM.write(EEPROM_ADDR_ALARM_MINUTES, alarmMinute);
     EEPROM.commit();
+    mqtt.publish("sunriseAlarm/alarmMinute", (String)alarmMinute, true);
 }
 
 bool DisplayTime::alarmGoesOff() {
@@ -156,10 +165,10 @@ String DisplayTime::getAlarmText(byte alarmMode) {
 }
 
 void DisplayTime::command(String topic, String msg) {
-    if (topic == "sunriseAlarm/alarmHour") {
-        this->updateAlarmHours(msg.toInt());
-    } else if (topic == "sunriseAlarm/alarmMinute") {
-        this->updateAlarmMinutes(msg.toInt());
+    if (topic == "sunriseAlarm/alarmHour/set") {
+        this->updateAlarmHours(msg.toInt(), true);
+    } else if (topic == "sunriseAlarm/alarmMinute/set") {
+        this->updateAlarmMinutes(msg.toInt(), true);
     } else if (topic == "sunriseAlarm/updateTime") {
         this->updateTime(msg.toInt());
     } 

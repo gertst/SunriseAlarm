@@ -15,7 +15,9 @@ class Mqtt
     void setup();
     void loop();
     void setCallback(std::function<void(String, String)> callback);
+    void publish(String topic, String payload, bool retained);
     void publish(String topic, String payload);
+    void publish(String topic);
     // void subscribe(String topic);
     uint32_t lastTimeSync = 0;
   

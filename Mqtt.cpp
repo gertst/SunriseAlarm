@@ -10,6 +10,7 @@ uint16_t reconnectTime = millis() + 5000;
 void Mqtt::setup() {
     //WiFi.mode(WIFI_STA);
     //mqttConnect();
+    mqttClient.setBufferSize(3000);
     mqttClient.setClient(wifiClient);
     mqttClient.setServer("192.168.68.10", 1883);
 }
@@ -77,6 +78,14 @@ void Mqtt::setCallback(std::function<void(String, String)> callback_) {
     this->callback = callback_;
 }
 
-void Mqtt::publish(String topic, String payload = "") {
+void Mqtt::publish(String topic, String payload, bool retained) {
+    mqttClient.publish(topic.c_str(), payload.c_str(), retained);
+}
+
+void Mqtt::publish(String topic, String payload) {
     mqttClient.publish(topic.c_str(), payload.c_str());
+}
+
+void Mqtt::publish(String topic) {
+    mqttClient.publish(topic.c_str(), "");
 }

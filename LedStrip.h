@@ -43,7 +43,6 @@ class LedStrip
     uint8_t blue(uint32_t color);
     uint8_t white(uint32_t color);
     uint32_t nextSunriseMillis = 0;
-    uint32_t sunriseIndex = 9999999;
     bool initDone = false;
     LightScene lightScenes[6] = {
       {"Off",     "#00000000"},
@@ -54,6 +53,7 @@ class LedStrip
       {"White",   "#77FCD795"}
     };
     uint8_t currentScene = 0;
+    int nextRow = -1;
 };
 
 #endif

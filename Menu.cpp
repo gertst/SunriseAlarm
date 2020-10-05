@@ -21,10 +21,7 @@ void Menu::setup() {
 
 JsonObject Menu::getActiveMenuItem() {
 
-    //const char* label = "?";
     JsonObject obj = json.as<JsonObject>();
-    // Serial.print("-----cur :");
-    // serializeJson(obj["label"], Serial);
     int i = 0;
     for (i = 0; i <= MAX_MENU_DEPTH; i++) {
         if (menuSelection[i] > -1 && obj.containsKey("items")) {

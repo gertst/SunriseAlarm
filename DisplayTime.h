@@ -11,8 +11,8 @@ class DisplayTime
     void loop();
     bool getIsAlarmOn();
     void setIsAlarmOn(bool value);
-    void updateAlarmHours(int rotation);
-    void updateAlarmMinutes(int rotation);
+    void updateAlarmHours(int rotation, bool isAbsolute);
+    void updateAlarmMinutes(int rotation, bool isAbsolute);
     String getAlarmText(byte alarmMode);
     bool alarmGoesOff();
     void command(String topic, String msg);

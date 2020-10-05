@@ -21,6 +21,7 @@
  */ 
 
 #include "Arduino.h"
+#include "Esp.h"
 #include <ESP8266WiFi.h>      // ESP library for all WiFi functions
 #include <timer.h>
 #include <EEPROM.h>
@@ -87,7 +88,7 @@ GPB7	8             15
 
 
 // Turn on debug statements to the serial output
-#define  DEBUG_ENABLE  1
+#define  DEBUG_ENABLE  0
 
 #if  DEBUG_ENABLE
 #define DEBUG(s, x) { Serial.print(F(s)); Serial.print(x); }
@@ -127,6 +128,7 @@ String lastTime = "";
 Mode mode;
 Mode lastMode;
 uint8_t lastWifiStatus;
+int heapTrigger = millis() + 10000;
 
 // Instance of MCP23017 library
 Adafruit_MCP23017 pinExpander;
@@ -206,7 +208,7 @@ void updateLDR() {
 
   if (intensity != newIntensity) {
     dotMatrix.setIntensity(newIntensity); //0 - 15
-    mqtt.publish("sunriseAlarm/intensity", (String)newIntensity);
+    //mqtt.publish("sunriseAlarm/intensity", (String)newIntensity);
     intensity = newIntensity;
   }
 }
@@ -263,10 +265,7 @@ void setup() {
 }
 
 void mqttCallback(String topic, String message) {
-  Serial.print("callback ");
-  Serial.print(topic);
-  Serial.println(message);
-
+  
   ledStrip.command(topic, message);
   displayTime.command(topic, message);
   dotMatrix.command(topic, message);
@@ -278,12 +277,14 @@ void mqttCallback(String topic, String message) {
     setMode(MODE_SET_ALARM_MINUTES);
   } else if (topic == "sunriseAlarm/alarmOnOff") {
     processMenuCommand("AlarmOnOff");
-  } else if (topic == "sunriseAlarm/alarm") {
-    setMode(MODE_ALARM);
+  } else if (topic == "sunriseAlarm/setMode") {
+    setMode((Mode)message.toInt());
   } else if (topic == "sunriseAlarm/intensityIncrease") {
     intensityIncrease = message.toFloat();
   } else if (topic == "sunriseAlarm/ping") {
     mqtt.publish("sunriseAlarm/pong", displayTime.getTime());
+  } else if (topic == "sunriseAlarm/reset") {
+   ESP.reset();
   }
 }
 
@@ -350,6 +351,12 @@ void loop() {
   // dfPlayer.loop();
   
   
+  if (heapTrigger < millis()) {
+    heapTrigger = millis() + (1000 * 120);
+    mqtt.publish("sunriseAlarm/debug/heap", (String)ESP.getFreeHeap());
+    mqtt.publish("sunriseAlarm/debug/fragmentation", (String)ESP.getHeapFragmentation());
+  }
+
   timerLDR.update();
   
   if (mode != MODE_WIFI_STATUS) {
@@ -403,8 +410,8 @@ void loop() {
       setMode(MODE_SET_ALARM_HOURS);
     } else if (mode == MODE_MENU) {
       String menuId = menu.commitMenu();
-      Serial.println(F("menuId: "));
-      Serial.println(menuId);
+      // Serial.println(F("menuId: "));
+      // Serial.println(menuId);
       processMenuCommand(menuId);
     } else if (mode == MODE_SET_ALARM_HOURS) {
       setMode(MODE_SET_ALARM_MINUTES);
@@ -427,9 +434,9 @@ void loop() {
     if (mode == MODE_CLOCK) {
       setMode(MODE_MENU);
     } else if (mode == MODE_SET_ALARM_HOURS) {
-      displayTime.updateAlarmHours(rotaryPosition - lastRotaryPosition);
+      displayTime.updateAlarmHours(rotaryPosition - lastRotaryPosition, true);
     } else if (mode == MODE_SET_ALARM_MINUTES) {
-      displayTime.updateAlarmMinutes(rotaryPosition - lastRotaryPosition);
+      displayTime.updateAlarmMinutes(rotaryPosition - lastRotaryPosition, true);
     } else if (mode == MODE_SET_ALARM_TOGGLE) {
       displayTime.setIsAlarmOn(!displayTime.getIsAlarmOn());
       dotMatrix.setAlarmDot(displayTime.getIsAlarmOn()); 
