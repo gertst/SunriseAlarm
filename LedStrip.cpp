@@ -7,7 +7,7 @@
 #include "Mqtt.h"
 
 extern Mqtt mqtt;
-std::vector<uint8_t> sunrise_map;
+std::vector<uint8_t> sunrise_map = {};
 
 void LedStrip::setup() {
     // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
@@ -27,12 +27,13 @@ void LedStrip::setup() {
         pixelData[i].targetColor = 0; 
         pixelData[i].startTime = 0;
         pixelData[i].targetTime = 0;
+        strip.setPixelColor(i, 0);
     }
     
 }
 
 void LedStrip::loop() {
-    if (!this->initDone) {
+    if (!this->initDone && millis() > 5000) {
         //init to black
         for (uint8_t i = 0; i < nrOfPixels; i++) {
             strip.setPixelColor(i, 0);
@@ -104,10 +105,11 @@ void LedStrip::command(String topic, String msg) {
         this->sunrise();
     } else if (topic.startsWith("sunriseAlarm/picture/return/pixelRow")) {
         
-        this->nextRow = topic.substring(topic.lastIndexOf("/")).toInt();
+        this->nextRow = topic.substring(topic.lastIndexOf("/") + 1).toInt();
 
         //delete all earlier elements first
         sunrise_map.erase(sunrise_map.begin(), sunrise_map.end());  
+        //mqtt.publish("sunriseAlarm/debug/sizeofSunrise_mapEmpty", (String)sizeof(sunrise_map));
         int j=0;
         for(int i =0; i < msg.length(); i++){
             if(msg.charAt(i) == ','){
@@ -115,8 +117,14 @@ void LedStrip::command(String topic, String msg) {
                 j = i+1;
             }
         }
+        //mqtt.publish("sunriseAlarm/debug/sizeAfterFill", (String)sizeof(sunrise_map));
+        //mqtt.publish("sunriseAlarm/debug/sizeofSunrise_mapFull", (String)sizeof(sunrise_map));
         sunrise_map.push_back(msg.substring(j,msg.length()).toInt()); //to grab the last value of the string
-        
+
+        //start the sunrise if not already started
+        if (this->nextSunriseMillis == 0) {
+            this->nextSunriseMillis = 1;
+        }
     }
     
     
@@ -143,8 +151,9 @@ uint8_t LedStrip::blue(uint32_t color) {
 }
 
 void LedStrip::updateSunrise() {
+    
     //iterate the sunrise_map array 
-    if (sizeof(sunrise_map) > 0  && this->nextSunriseMillis < millis()) {
+    if (this->nextSunriseMillis > 0 && this->nextSunriseMillis < millis()) {
         this->nextSunriseMillis = millis() + 30000;
         //el 1 = red   pixel 1
         //el 2 = green pixel 1
@@ -162,12 +171,10 @@ void LedStrip::updateSunrise() {
                     sunrise_map[i + 2], 
                     sunrise_map[i + 3]
                 ), 
-                this->nextSunriseMillis
+                this->nextSunriseMillis - 100
             );
         }
-        //delete all elements of array
-        sunrise_map.erase(sunrise_map.begin(), sunrise_map.end());  
-
+        
         //get next row, if existing
         if (this->nextRow > -1) {
             mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", (String)this->nextRow);
@@ -177,7 +184,7 @@ void LedStrip::updateSunrise() {
 
 void LedStrip::sunrise() {
     //get the first 150 pixels from MQTT
-    mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", "0");
+    mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", "1");
 }
 
 LightScene LedStrip::getCurrentLightScene() {
