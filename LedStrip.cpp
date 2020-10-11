@@ -7,7 +7,8 @@
 #include "Mqtt.h"
 
 extern Mqtt mqtt;
-std::vector<uint8_t> sunrise_map = {};
+
+const uint32_t SUNRISE_STEP_TIME = 20000;
 
 void LedStrip::setup() {
     // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
@@ -48,8 +49,8 @@ void LedStrip::fadeTo(uint8_t pixelNumber, uint32_t color, uint32_t targetTime) 
     
     pixelData[pixelNumber].startColor = strip.getPixelColor(pixelNumber);
     pixelData[pixelNumber].targetColor = strip.gamma32(color);
-    pixelData[pixelNumber].startTime = millis() + (100 * pixelNumber);
-    pixelData[pixelNumber].targetTime = targetTime + (100 * pixelNumber);
+    pixelData[pixelNumber].startTime = millis() + (50 * pixelNumber); //time is dependant of pixelNumber, to make sue no pixels are set at the same time
+    pixelData[pixelNumber].targetTime = targetTime + (50 * pixelNumber);
 }
 
 void LedStrip::updateFade() {
@@ -90,7 +91,8 @@ void LedStrip::updateFade() {
 void LedStrip::command(String topic, String msg) {
     if (topic == "sunriseAlarm/fadeTo") {
         //cancel sunrise effect
-        this->nextRow = -1;
+        this->nextSunriseMillis = 0;
+
         msg.replace("#", "0x"); 
         uint32_t value = strtol(msg.c_str(), NULL, 16);
         for (uint8_t i = 0; i < nrOfPixels; i++) {
@@ -107,24 +109,48 @@ void LedStrip::command(String topic, String msg) {
         
         this->nextRow = topic.substring(topic.lastIndexOf("/") + 1).toInt();
 
-        //delete all earlier elements first
-        sunrise_map.erase(sunrise_map.begin(), sunrise_map.end());  
-        //mqtt.publish("sunriseAlarm/debug/sizeofSunrise_mapEmpty", (String)sizeof(sunrise_map));
-        int j=0;
-        for(int i =0; i < msg.length(); i++){
-            if(msg.charAt(i) == ','){
-                sunrise_map.push_back(msg.substring(j,i).toInt());
-                j = i+1;
+        if (this->nextRow > -1) {
+            this->nextSunriseMillis = millis() + SUNRISE_STEP_TIME;
+        } else {
+            this->nextSunriseMillis = 0;
+        }
+
+        //el 1 = red   pixel 1
+        //el 2 = green pixel 1
+        //el 3 = blue  pixel 1
+        //el 4 = alpha pixel 1 (used as white)
+        //el 1 = red   pixel 2
+        //el 2 = green pixel 2
+        //el 3 = blue  pixel 2
+        //el 4 = alpha pixel 2 (used as white)
+        // ...
+
+        std::vector<uint8_t> sunrise_map = {};
+
+        //iterate msg from mqtt
+        int startPos = 0;
+        for(int msgPos = 0; msgPos < msg.length(); msgPos++){
+            if(msg.charAt(msgPos) == ','){
+                sunrise_map.push_back(msg.substring(startPos, msgPos).toInt());
+                startPos = msgPos + 1;
             }
         }
-        //mqtt.publish("sunriseAlarm/debug/sizeAfterFill", (String)sizeof(sunrise_map));
-        //mqtt.publish("sunriseAlarm/debug/sizeofSunrise_mapFull", (String)sizeof(sunrise_map));
-        sunrise_map.push_back(msg.substring(j,msg.length()).toInt()); //to grab the last value of the string
+        sunrise_map.push_back(msg.substring(startPos,msg.length()).toInt()); //to grab the last value of the string
 
-        //start the sunrise if not already started
-        if (this->nextSunriseMillis == 0) {
-            this->nextSunriseMillis = 1;
+        for (uint8_t i = 0; i < nrOfPixels; i++) {
+            fadeTo(i, strip.Color(
+                    sunrise_map[i * 4 + 0], 
+                    sunrise_map[i * 4 + 1], 
+                    sunrise_map[i * 4 + 2], 
+                    sunrise_map[i * 4 + 3]
+                ), 
+                millis() + SUNRISE_STEP_TIME - 5000
+            );
         }
+
+        //delete all elements again
+        sunrise_map.erase(sunrise_map.begin(), sunrise_map.end());  
+
     }
     
     
@@ -152,33 +178,14 @@ uint8_t LedStrip::blue(uint32_t color) {
 
 void LedStrip::updateSunrise() {
     
-    //iterate the sunrise_map array 
+    //ready to get next row of pixels from MQTT/node-red?
     if (this->nextSunriseMillis > 0 && this->nextSunriseMillis < millis()) {
-        this->nextSunriseMillis = millis() + 30000;
-        //el 1 = red   pixel 1
-        //el 2 = green pixel 1
-        //el 3 = blue  pixel 1
-        //el 4 = alpha pixel 1 (used as white)
-        //el 1 = red   pixel 2
-        //el 2 = green pixel 2
-        //el 3 = blue  pixel 2
-        //el 4 = alpha pixel 2 (used as white)
-        // ...
-        for (uint8_t i = 0; i < nrOfPixels; i+=4) {
-            fadeTo(i, strip.Color(
-                    sunrise_map[i + 0], 
-                    sunrise_map[i + 1], 
-                    sunrise_map[i + 2], 
-                    sunrise_map[i + 3]
-                ), 
-                this->nextSunriseMillis - 100
-            );
-        }
-        
-        //get next row, if existing
-        if (this->nextRow > -1) {
-            mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", (String)this->nextRow);
-        }
+
+        mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", (String)this->nextRow);
+
+        //tmp set to 0 (disable, as it will ne set with the return)
+        this->nextSunriseMillis = 0;
+
     }
 }
 
