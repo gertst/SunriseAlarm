@@ -434,9 +434,9 @@ void loop() {
     if (mode == MODE_CLOCK) {
       setMode(MODE_MENU);
     } else if (mode == MODE_SET_ALARM_HOURS) {
-      displayTime.updateAlarmHours(rotaryPosition - lastRotaryPosition, true);
+      displayTime.updateAlarmHours(rotaryPosition - lastRotaryPosition, false);
     } else if (mode == MODE_SET_ALARM_MINUTES) {
-      displayTime.updateAlarmMinutes(rotaryPosition - lastRotaryPosition, true);
+      displayTime.updateAlarmMinutes(rotaryPosition - lastRotaryPosition, false);
     } else if (mode == MODE_SET_ALARM_TOGGLE) {
       displayTime.setIsAlarmOn(!displayTime.getIsAlarmOn());
       dotMatrix.setAlarmDot(displayTime.getIsAlarmOn()); 

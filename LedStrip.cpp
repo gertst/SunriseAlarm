@@ -115,42 +115,29 @@ void LedStrip::command(String topic, String msg) {
             this->nextSunriseMillis = 0;
         }
 
-        //el 1 = red   pixel 1
-        //el 2 = green pixel 1
-        //el 3 = blue  pixel 1
-        //el 4 = alpha pixel 1 (used as white)
-        //el 1 = red   pixel 2
-        //el 2 = green pixel 2
-        //el 3 = blue  pixel 2
-        //el 4 = alpha pixel 2 (used as white)
-        // ...
+        //msg contains: rrggbbaa,rrggbbaa, ...
+        //eg: f4f1e8ff,f6f2eaff,f6f4ebff,f7f5edff,f8f6eeff,f8f6efff,...
 
-        std::vector<uint8_t> sunrise_map = {};
+        uint8_t cnt = 0;
 
         //iterate msg from mqtt
-        int startPos = 0;
-        for(int msgPos = 0; msgPos < msg.length(); msgPos++){
-            if(msg.charAt(msgPos) == ','){
-                sunrise_map.push_back(msg.substring(startPos, msgPos).toInt());
-                startPos = msgPos + 1;
-            }
-        }
-        sunrise_map.push_back(msg.substring(startPos,msg.length()).toInt()); //to grab the last value of the string
-
-        for (uint8_t i = 0; i < nrOfPixels; i++) {
-            fadeTo(i, strip.Color(
-                    sunrise_map[i * 4 + 0], 
-                    sunrise_map[i * 4 + 1], 
-                    sunrise_map[i * 4 + 2], 
-                    sunrise_map[i * 4 + 3]
+        for(uint32_t msgPos = 0; msgPos < msg.length(); msgPos+=9){
+            // mqtt.publish("sunriseAlarm/picture/debug", 
+            // (String)msg.substring(msgPos, msgPos + 2) + ">" + (String)strtoul(msg.substring(msgPos, msgPos + 2).c_str(), NULL, 16) + ", " +
+            // (String)msg.substring(msgPos + 2, msgPos + 4) + ">" +  (String)strtoul(msg.substring(msgPos + 2, msgPos + 4).c_str(), NULL, 16) + ", " +
+            // (String)msg.substring(msgPos + 4, msgPos + 6) + ">" +  (String)strtoul(msg.substring(msgPos + 4, msgPos + 6).c_str(), NULL, 16)
+            // );
+            fadeTo(cnt, strip.Color(
+                    (uint8_t)strtoul(msg.substring(msgPos, msgPos + 2).c_str(), NULL, 16),
+                    (uint8_t)strtoul(msg.substring(msgPos + 2, msgPos + 4).c_str(), NULL, 16),
+                    (uint8_t)strtoul(msg.substring(msgPos + 4, msgPos + 6).c_str(), NULL, 16),
+                    255 - (uint8_t)strtoul(msg.substring(msgPos + 6, msgPos + 8).c_str(), NULL, 16)
                 ), 
                 millis() + SUNRISE_STEP_TIME - 5000
             );
+            cnt++;
         }
-
-        //delete all elements again
-        sunrise_map.erase(sunrise_map.begin(), sunrise_map.end());  
-
+       
     }
     
     
