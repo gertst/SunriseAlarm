@@ -3,9 +3,10 @@
 ## A digital clock with auditive and visual alarm.
 
 When an alarms goes off, a ledstrip above the bed slowly simulates a sunrise and music starts to play, increasing very slowly.
-Different LED light scenes can be set and the wake-up time can be set and changed, both using a roary knob and remotly. 
+Different LED light scenes can be set and the wake-up time can be set and changed, both using a rotary knob and remotly. 
 The SunriseAlarm can send and receive commmands using MQTT, so remote control is possible with a wide range of devices, like a smartphone or a full blown home automation system.
 
+Here are some photos: https://photos.app.goo.gl/3kZMjbhgKaqZbkF48
 
 ### Component list and why they are used:
 
