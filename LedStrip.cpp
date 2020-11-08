@@ -8,7 +8,7 @@
 
 extern Mqtt mqtt;
 
-const uint32_t SUNRISE_STEP_TIME = 20000;
+const uint32_t SUNRISE_STEP_TIME = 10000;
 
 void LedStrip::setup() {
     // These lines are specifically to support the Adafruit Trinket 5V 16 MHz.
@@ -42,15 +42,15 @@ void LedStrip::loop() {
         this->initDone = true;
     }
     updateFade();
-    updateSunrise();
+    updateImageEffect();
 }
 
 void LedStrip::fadeTo(uint8_t pixelNumber, uint32_t color, uint32_t targetTime) {
     
     pixelData[pixelNumber].startColor = strip.getPixelColor(pixelNumber);
     pixelData[pixelNumber].targetColor = strip.gamma32(color);
-    pixelData[pixelNumber].startTime = millis() + (50 * pixelNumber); //time is dependant of pixelNumber, to make sue no pixels are set at the same time
-    pixelData[pixelNumber].targetTime = targetTime + (50 * pixelNumber);
+    pixelData[pixelNumber].startTime = millis() + (20 * pixelNumber); //time is dependant of pixelNumber, to make sue no pixels are set at the same time
+    pixelData[pixelNumber].targetTime = targetTime + (20 * pixelNumber);
 }
 
 void LedStrip::updateFade() {
@@ -93,19 +93,31 @@ void LedStrip::command(String topic, String msg) {
         //cancel sunrise effect
         this->nextSunriseMillis = 0;
 
-        msg.replace("#", "0x"); 
-        uint32_t value = strtol(msg.c_str(), NULL, 16);
+        String color = "#000000";
+        int delay = 8000;
+        if (msg.lastIndexOf(",") > -1) {
+            color = msg.substring(0, msg.lastIndexOf(","));
+            String secondParam = msg.substring(msg.lastIndexOf(",") + 1);
+            delay = secondParam.toInt() * 1000;
+            //mqtt.publish("sunriseAlarm/debug", color + "--" + secondParam);
+        } else {
+            color = msg;
+        }
+        color.replace("#", "0x"); 
+        uint32_t value = strtol(color.c_str(), NULL, 16);
         for (uint8_t i = 0; i < nrOfPixels; i++) {
             //middle leds: keep black to keep leds below the clock to black
             if (i >= 71 && i <= 79) {
-                this->fadeTo(i, 0, millis()+ 8000);   
+                this->fadeTo(i, 0, millis() + delay);   
             } else {
-                this->fadeTo(i, value, millis()+ 8000);   
+                this->fadeTo(i, value, millis() + delay);   
             }
         }
-    } else if (topic == "sunriseAlarm/sunrise") {
-        this->sunrise();
-    } else if (topic.startsWith("sunriseAlarm/picture/return/pixelRow")) {
+    } else if (topic.startsWith("sunriseAlarm/picture/get/")) {
+        //keep the name of the picture
+        this->picture = topic.substring(topic.lastIndexOf("/") + 1);
+        //mqtt.publish(topic, "1");
+    }  else if (topic.startsWith("sunriseAlarm/picture/return/pixelRow")) {
         
         this->nextRow = topic.substring(topic.lastIndexOf("/") + 1).toInt();
 
@@ -133,7 +145,7 @@ void LedStrip::command(String topic, String msg) {
                     (uint8_t)strtoul(msg.substring(msgPos + 4, msgPos + 6).c_str(), NULL, 16),
                     255 - (uint8_t)strtoul(msg.substring(msgPos + 6, msgPos + 8).c_str(), NULL, 16)
                 ), 
-                millis() + SUNRISE_STEP_TIME - 5000
+                millis() + SUNRISE_STEP_TIME - round(SUNRISE_STEP_TIME/4)
             );
             cnt++;
         }
@@ -163,22 +175,17 @@ uint8_t LedStrip::blue(uint32_t color) {
     return color & 0xFF;
 }
 
-void LedStrip::updateSunrise() {
+void LedStrip::updateImageEffect() {
     
     //ready to get next row of pixels from MQTT/node-red?
     if (this->nextSunriseMillis > 0 && this->nextSunriseMillis < millis()) {
 
-        mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", (String)this->nextRow);
+        mqtt.publish("sunriseAlarm/picture/get/" + this->picture, (String)this->nextRow);
 
         //tmp set to 0 (disable, as it will ne set with the return)
         this->nextSunriseMillis = 0;
 
     }
-}
-
-void LedStrip::sunrise() {
-    //get the first 150 pixels from MQTT
-    mqtt.publish("sunriseAlarm/picture/get/sunriseForRow", "1");
 }
 
 LightScene LedStrip::getCurrentLightScene() {

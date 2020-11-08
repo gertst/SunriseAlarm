@@ -311,7 +311,7 @@ void setMode(Mode newMode) {
   //if oldMode is alarm: stop alarm
   if (mode == MODE_ALARM) {
     // dfPlayer.command("sunriseAlarm/stopMusic", "");
-    ledStrip.command("sunriseAlarm/fadeTo", "#00000000");
+    ledStrip.command("sunriseAlarm/fadeTo", "{color:#00000000, delayInSeconds:5}");
   }
 
   if (newMode == MODE_MENU) {
@@ -327,7 +327,8 @@ void setMode(Mode newMode) {
     updateClock();
     // dfPlayer.command("sunriseAlarm/volumeRaiseTo", "30");
     // dfPlayer.command("sunriseAlarm/play", "1");
-    ledStrip.command("sunriseAlarm/sunrise", "");
+    //ledStrip.command("sunriseAlarm/picture/get/sunrise", "1");
+    mqtt.publish("sunriseAlarm/picture/get/Sunrise", "1");
   } else if (newMode == MODE_SET_ALARM_TOGGLE) {
     showAlarmToggle();
   } else if (newMode == MODE_SET_LIGHT_SCENE) {
@@ -443,7 +444,11 @@ void loop() {
     } else if (mode == MODE_SET_LIGHT_SCENE) {
       ledStrip.setNextOrPreviousLightScene(rotaryPosition - lastRotaryPosition);
       dotMatrix.showText(ledStrip.getCurrentLightScene().label);
-      ledStrip.command("sunriseAlarm/fadeTo", ledStrip.getCurrentLightScene().hex);
+      if (ledStrip.getCurrentLightScene().type == "fadeTo") {
+        ledStrip.command("sunriseAlarm/fadeTo", ledStrip.getCurrentLightScene().hex + ",5");
+      } else if (ledStrip.getCurrentLightScene().type == "picture") {
+        mqtt.publish("sunriseAlarm/picture/get/" + ledStrip.getCurrentLightScene().label, "1");
+      }
     } else {
       menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     }

@@ -13,7 +13,10 @@ struct pixelData_t {
 
 struct LightScene {
   String label;
+  String type;
   String hex;
+  uint8_t delayInSeconds;
+  bool loop;
 };
 
 class LedStrip
@@ -37,23 +40,34 @@ class LedStrip
     void fadeTo(uint8_t pixelNumber, uint32_t color, uint32_t targetTime);
     pixelData_t pixelData[150];
     void updateFade();
-    void updateSunrise();
+    void updateImageEffect();
     uint8_t red(uint32_t color);
     uint8_t green(uint32_t color);
     uint8_t blue(uint32_t color);
     uint8_t white(uint32_t color);
     uint32_t nextSunriseMillis = 0;
     bool initDone = false;
-    LightScene lightScenes[6] = {
-      {"Off",     "#00000000"},
-      {"Soft",    "#007C4318"},
-      {"Cyan",    "#002a727f"},
-      {"Red",     "#007c0018"},
-      {"Orange",  "#009e5721"},
-      {"White",   "#77FCD795"}
+    LightScene lightScenes[16] = {
+      {"Off",    "fadeTo", "#00000000", 10, false},
+      {"Soft",   "fadeTo", "#007C4318", 5, false},
+      {"Cyan",   "fadeTo", "#002a727f", 5, false},
+      {"Red",    "fadeTo", "#007c0018", 5, false},
+      {"Orange", "fadeTo", "#009e5721", 5, false},
+      {"White",  "fadeTo", "#77FCD795", 5, false},
+      {"Banaan",  "picture", "", 3, true},
+      {"Chaos",  "picture", "", 3, true},
+      {"Dream",  "picture", "", 3, true},
+      {"Flames",  "picture", "", 3, true},
+      {"Flamingo",  "picture", "", 3, true},
+      {"Kawaii",  "picture", "", 3, true},
+      {"Leaves",  "picture", "", 3, true},
+      {"Rainbow",  "picture", "", 3, true},
+      {"Sea",  "picture", "", 3, true},
+      {"Sunrise",  "picture", "", 20, false}
     };
     uint8_t currentScene = 0;
     int nextRow = -1;
+    String picture = "";
 };
 
 #endif
