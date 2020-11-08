@@ -4,9 +4,9 @@
 
 When an alarms goes off, a ledstrip above the bed slowly simulates a sunrise and music starts to play, increasing very slowly.
 Different LED light scenes can be set and the wake-up time can be set and changed, both using a rotary knob and remotly. 
-The SunriseAlarm can send and receive commmands using MQTT, so remote control is possible with a wide range of devices, like a smartphone or a full blown home automation system.
+The Sunrise Alarm can send and receive commmands using MQTT, so remote control is possible with a wide range of devices, like a smartphone or a home automation system.
 
-Here are some photos and a video of the effects: https://photos.app.goo.gl/3kZMjbhgKaqZbkF48
+Here are some photos and a video of the installation and light effects: https://photos.app.goo.gl/3kZMjbhgKaqZbkF48
 
 ### Component list and why they are used:
 
@@ -42,15 +42,23 @@ Here are some photos and a video of the effects: https://photos.app.goo.gl/3kZMj
 To have the best possible sunrise accuracy, I creates an image in Photoshop. The pixel width of the image is the number of leds of te strip (150 pixels). The height of the image is the time: each row of pixels is a point in time of the sunrise animation. 
 So pixel 1,1 shwos the starting color of led 1, and then fades to pixel 1,2 over 20 seconds. The next 20 seconds pixel 1 fades to tehe color of pixel 1,3 and so on.
 
-For now I converted the png image to an array of RGB values and I stored that array directly in my code. But I plan to read this image from internet in order the have an easier update process.
-
-I also discovered that the raw RGB values should be gamma-corrected to show an accurate color, but luckily the NeoPixel library I used had a handy function in place to do that for me.
+ The image is read from a Raspberry Pi that is already used for my dyi home automation. Using MQTT I request to read the n-th pixel row of the image. One row contains: rrggbbaa,rrggbbaa, ... The aa is the png transparancy and reflects the inverse intencity of the white LEDs. Eg: f4f1e8ff,f6f2eaff,f6f4ebff,f7f5edff,f8f6eeff,f8f6efff,...
 
 ### The menu
 To have a good UI and UX on the clock setting, I did some experiments to find the best menu system using a single rotary knob. This is still work in progress, but at least I already have a system in place to read a json file as a tree structure for the hierachical menu. That makes modifications quite straightforward.
+
+ ## Other light effects
+ It was an afterthought, but since I already had the image-to-LED effect in place, I decided to add a generic way to load any picture as a light effect. Each 20 seconds a new MQTT message is published with the next row of that image, creating an infinite fade from row to row.
+
+ Another option is to select a single color (eg from the smartphone app) and fade towards that color. Some preset colors are added to the menu that is controlled with the rotary knob.
+
+I discovered that the raw RGB values should be gamma-corrected to show an accurate color, but luckily the NeoPixel library I used had a handy function in place to do that for me.
 
 ### OOP(s)
 Because a lot of different sensors, events and modes are used, I wanted to organise my C++ code as object oriented as possible. But OOP in the Arduino world is hard to find. Quite some beginner coders are available on the Arduino platform, and code examples are poorly written. So I spend a lot of time iterating and refactoring the code to have it more or less as I want. All components are nicely black-boxed in their own cpp file and communicate to each other in the main app file. But since this is my first real c++ project, I'm afraid I still miss a lot of important c++ typical syntax to write elegant c++ code...  The use of pointers is still pointless to me (no pun intended), and I know I have to get rid of Strings and use char arrays, but that's something for the next refactoring ;-)
 
 ### OTA
 What's cool about the NodeMCU is the over the air (OTA) updates system: in stead of connecting the clock directly to my PC using a usb cable, I could install the clock where it belongs, above the bed, and send all code updates over WIFI directly to the clock. How cool is that?! 
+
+### WAF
+Last but not least, to increase the WAF (Wife Acceptance Factor), I made a nice wooden housing for the clock. The rotary knob is built into the hanging cupboard above our bed. All cables are tucked away by sinking them under the LED strips. 
