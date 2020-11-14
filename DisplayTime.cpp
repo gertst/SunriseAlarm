@@ -120,13 +120,7 @@ bool DisplayTime::alarmGoesOff() {
 
         if (!alarmIsTriggered && alarmHour == hours() && alarmMinute == minutes() ) {
             alarmIsTriggered = true;
-            //reset alarm once the exact alarm minute has passed
-            if (alarmMinute != minutes()) {
-                alarmIsTriggered = false;
-                return false;
-            } else {
-                return true;
-            }
+            return true;
         } else {
             return false;
         }

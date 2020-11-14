@@ -20,10 +20,10 @@ class DisplayTime
     byte seconds();
     byte minutes();
     byte hours();
+    bool alarmIsTriggered = false;
     
   private:
     bool isAlarmOn = false;
-    bool alarmIsTriggered = false;
     byte alarmHour = 6;
     byte alarmMinute = 50;
     int8_t lastMinutes;

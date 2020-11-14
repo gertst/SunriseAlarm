@@ -36,6 +36,8 @@
 #include "Menu.h"
 #include "LedStrip.h"
 #include "Mqtt.h"
+#include <TimeLib.h>
+
 // #include "Http.h"
 // #include "DFPlayer.h"
 
@@ -211,8 +213,13 @@ void updateLDR() {
     //mqtt.publish("sunriseAlarm/intensity", (String)newIntensity);
     intensity = newIntensity;
   }
-}
 
+  //restart ESP at 3 'o clock and if the ESP runs for more then 2 hours (to avoid resetting in the same hour)
+  if (hour() == 3 && millis() > 2 * 60 * 60 * 1000) {
+    ESP.restart();
+  }
+
+}
 
 /*******************
  ****   SETUP    ***
@@ -283,8 +290,8 @@ void mqttCallback(String topic, String message) {
     intensityIncrease = message.toFloat();
   } else if (topic == "sunriseAlarm/ping") {
     mqtt.publish("sunriseAlarm/pong", displayTime.getTime());
-  } else if (topic == "sunriseAlarm/reset") {
-   ESP.reset();
+  } else if (topic == "sunriseAlarm/restart") {
+   ESP.restart();
   }
 }
 
@@ -312,6 +319,7 @@ void setMode(Mode newMode) {
   if (mode == MODE_ALARM) {
     // dfPlayer.command("sunriseAlarm/stopMusic", "");
     ledStrip.command("sunriseAlarm/fadeTo", "{color:#00000000, delayInSeconds:5}");
+    displayTime.alarmIsTriggered = false;
   }
 
   if (newMode == MODE_MENU) {

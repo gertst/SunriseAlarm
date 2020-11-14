@@ -58,7 +58,7 @@ class LedStrip
       {"Chaos",  "picture", "", 3, true},
       {"Dream",  "picture", "", 3, true},
       {"Flames",  "picture", "", 3, true},
-      {"Flamingo",  "picture", "", 3, true},
+      {"Pink",  "picture", "", 3, true},
       {"Kawaii",  "picture", "", 3, true},
       {"Leaves",  "picture", "", 3, true},
       {"Rainbow",  "picture", "", 3, true},
