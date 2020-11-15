@@ -46,22 +46,24 @@ class LedStrip
     uint8_t blue(uint32_t color);
     uint8_t white(uint32_t color);
     uint32_t nextSunriseMillis = 0;
+    uint32_t nextFadeMillis = 0;
     bool initDone = false;
-    LightScene lightScenes[16] = {
+    LightScene lightScenes[17] = {
       {"Off",    "fadeTo", "#00000000", 10, false},
-      {"Soft",   "fadeTo", "#007C4318", 5, false},
+      {"Soft",   "fadeTo", "#00564406", 5, false},
       {"Cyan",   "fadeTo", "#002a727f", 5, false},
       {"Red",    "fadeTo", "#007c0018", 5, false},
       {"Orange", "fadeTo", "#009e5721", 5, false},
       {"White",  "fadeTo", "#77FCD795", 5, false},
       {"Banaan",  "picture", "", 3, true},
       {"Chaos",  "picture", "", 3, true},
+      {"Colors",  "picture", "", 3, true},
+      {"Dark",  "picture", "", 3, true},
       {"Dream",  "picture", "", 3, true},
       {"Flames",  "picture", "", 3, true},
-      {"Pink",  "picture", "", 3, true},
       {"Kawaii",  "picture", "", 3, true},
       {"Leaves",  "picture", "", 3, true},
-      {"Rainbow",  "picture", "", 3, true},
+      {"Pink",  "picture", "", 3, true},
       {"Sea",  "picture", "", 3, true},
       {"Sunrise",  "picture", "", 20, false}
     };
