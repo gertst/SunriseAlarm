@@ -47,18 +47,22 @@ void LedStrip::loop() {
 }
 
 void LedStrip::fadeTo(uint8_t pixelNumber, uint32_t color, uint32_t targetTime) {
-    int delayBetweenPixels = lightScenes[currentScene].delayInSeconds * 1;
+    int positionDelay = abs(pixelNumber - 75); //faster in the middle
+    int delay = positionDelay * (lightScenes[currentScene].delayInSeconds * 1000 / 40);
     pixelData[pixelNumber].startColor = strip.getPixelColor(pixelNumber);
     pixelData[pixelNumber].targetColor = strip.gamma32(color);
-    pixelData[pixelNumber].startTime = millis() + (delayBetweenPixels * pixelNumber); //time is dependant of pixelNumber, to make sue no pixels are set at the same time
-    pixelData[pixelNumber].targetTime = targetTime + (delayBetweenPixels * pixelNumber);
+    pixelData[pixelNumber].startTime = millis() + delay; //time is dependant of pixelNumber, to make sue no pixels are set at the same time
+    pixelData[pixelNumber].targetTime = targetTime + (delay / 2.5);
+    if (pixelData[pixelNumber].startTime > targetTime) {
+        pixelData[pixelNumber].startTime = targetTime;    
+    }
 }
 
 void LedStrip::updateFade() {
 
     if (millis() > nextFadeMillis) {
 
-        nextFadeMillis = millis() + 10;
+        nextFadeMillis = millis() + 3;
 
         bool isChanged = false;
         uint8_t redValue;
@@ -147,7 +151,7 @@ void LedStrip::command(String topic, String msg) {
                     (uint8_t)strtoul(msg.substring(msgPos + 4, msgPos + 6).c_str(), NULL, 16),
                     255 - (uint8_t)strtoul(msg.substring(msgPos + 6, msgPos + 8).c_str(), NULL, 16)
                 ), 
-                millis() + (lightScenes[currentScene].delayInSeconds * 950)
+                millis() + (lightScenes[currentScene].delayInSeconds * 1000) - 1000
             );
             cnt++;
         }

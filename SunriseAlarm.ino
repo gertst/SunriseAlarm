@@ -318,7 +318,7 @@ void setMode(Mode newMode) {
   //if oldMode is alarm: stop alarm
   if (mode == MODE_ALARM) {
     // dfPlayer.command("sunriseAlarm/stopMusic", "");
-    ledStrip.command("sunriseAlarm/fadeTo", "{color:#00000000, delayInSeconds:5}");
+    ledStrip.command("sunriseAlarm/fadeTo", "#000000,5");
     displayTime.alarmIsTriggered = false;
   }
 
