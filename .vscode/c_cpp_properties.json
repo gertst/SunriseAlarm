@@ -8,9 +8,12 @@
                 "/Users/Gert/Library/Arduino15/staging/**",
                 "/Users/Gert/Library/Arduino15/packages/esp8266/hardware/esp8266/2.7.2/**",
                 "/Users/Gert/Documents/Arduino/libraries/**",
-                "${workspaceFolder}/**"
+                "${workspaceFolder}/**",
+                "/Applications/Arduino.app/Contents/Java/libraries/**"
             ],
-            "defines": [],
+            "defines": [
+                "USBCON"
+            ],
             "macFrameworkPath": [
                 "/Library/Developer/CommandLineTools/SDKs/MacOSX.sdk/System/Library/Frameworks"
             ],
