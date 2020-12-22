@@ -47,7 +47,6 @@ class LedStrip
     uint8_t white(uint32_t color);
     uint32_t nextSunriseMillis = 0;
     uint32_t nextFadeMillis = 0;
-    bool initDone = false;
     LightScene lightScenes[17] = {
       {"Off",    "fadeTo", "#00000000", 10, false},
       {"Soft",   "fadeTo", "#00564406", 5, false},

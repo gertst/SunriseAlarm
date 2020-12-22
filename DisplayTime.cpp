@@ -6,6 +6,7 @@
 #include <TimeLib.h>
 #include "Mqtt.h"
 
+
 extern Mqtt mqtt;
 
 #define EEPROM_ADDR_ALARM_ON_OFF 0
@@ -48,19 +49,22 @@ void DisplayTime::setIsAlarmOn(bool value) {
     EEPROM.commit();
 }
 
-String DisplayTime::getTime()
+char *DisplayTime::getTime(bool alarmIsOn)
 {
     
-    String time = String(hours());
+    char time[9];
+    char alarmsSign[2] = "";
+    if (alarmIsOn) {
+        strcpy(alarmsSign, "|");
+    }
     if (seconds() % 2) {
-        time = time + ":" ;
+        sprintf(time, "%i:%02d", hours(), minutes());
     } else {
-        time = time + " " ;
+        sprintf(time, "%s%i %02d%s", alarmsSign, hours(), minutes(), alarmsSign);
     }
     if (minutes() < 10) {
-        time = time + "0";
+        strcat(time, "0");
     }
-    time = time + String(minutes());
     if (minutes() != lastMinutes) {
         //mqtt.publish("sunriseAlarm/npt/time", time);
         lastMinutes = minutes();

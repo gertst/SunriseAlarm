@@ -7,7 +7,7 @@ class DisplayTime
 {
   public:
     void setup();
-    String getTime();
+    char *getTime(bool alarmIsOn);
     void loop();
     bool getIsAlarmOn();
     void setIsAlarmOn(bool value);

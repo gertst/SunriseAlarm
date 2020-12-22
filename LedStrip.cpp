@@ -32,15 +32,12 @@ void LedStrip::setup() {
 }
 
 void LedStrip::loop() {
-    if (!this->initDone && millis() > 5000) {
+    if (millis() < 5000) {
         //init to black
         for (uint8_t i = 0; i < nrOfPixels; i++) {
-            strip.setPixelColor(i, 0);
+            strip.setPixelColor(i, random(0,1));
         }
-        this->initDone = true;
-    }
-
-    if (initDone) {
+    } else {
         updateFade();
         updateImageEffect();
     }

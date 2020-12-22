@@ -56,9 +56,9 @@ void DotMatrix::loop()
   {
     if (newMessageAvailable) {
       refreshDot = true;
-      parola.setTextBuffer(newText.c_str());
+      parola.setTextBuffer(newText);
       //getTextColumns is a new method
-      textExceedsDisplay = parola.getTextColumns(newText.c_str()) > 32;
+      textExceedsDisplay = parola.getTextColumns(newText) > 32;
       
       if (textExceedsDisplay) {
         parola.setTextEffect(PA_SCROLL_LEFT, PA_SCROLL_LEFT); //in and out effect
@@ -126,9 +126,9 @@ void DotMatrix::loop()
   parola.getGraphicObject()->control(MD_MAX72XX::INTENSITY, intensity);
 }
 
-void DotMatrix::showText(String text) {
-  if (newText != text) {
-    newText = text;
+void DotMatrix::showText(char *text) {
+  if (strcmp(newText, text) != 0) {
+    strncpy(newText, text, sizeof(newText));
     newMessageAvailable = true;
   }
 }

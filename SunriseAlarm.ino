@@ -126,7 +126,7 @@ const char *password = "gertstogo1627";
 int rotaryPosition = 0;
 int lastRotaryPosition = 0;
 Timer timerLDR;
-String lastTime = "";
+char lastTime[9] = "";
 Mode mode;
 Mode lastMode;
 uint8_t lastWifiStatus;
@@ -147,21 +147,15 @@ uint8_t intensity;
 float intensityIncrease = 10.0;
 
 void updateClock() {
-  String newTime = displayTime.getTime();
-  if (mode == MODE_ALARM) {
-    if (millis() % 500 > 250 ) {
-      newTime.replace(":", "|");
-      newTime.replace(" ", "|");
-    }
-  }
-  if (lastTime != newTime) {
-    lastTime = newTime;
+  char *newTime = displayTime.getTime(mode == MODE_ALARM);
+  if (strcmp(lastTime, newTime) != 0) {
+    strncpy(lastTime, newTime, sizeof(lastTime));
     dotMatrix.showText(newTime);
   }
 }
 
 void updateSetAlarm() {
-  dotMatrix.showText(displayTime.getAlarmText(mode == MODE_SET_ALARM_HOURS ? 1 : 2));
+  dotMatrix.showText((char *)displayTime.getAlarmText(mode == MODE_SET_ALARM_HOURS ? 1 : 2).c_str());
 }
 
 void showAlarmToggle() {
@@ -289,7 +283,7 @@ void mqttCallback(String topic, String message) {
   } else if (topic == "sunriseAlarm/intensityIncrease") {
     intensityIncrease = message.toFloat();
   } else if (topic == "sunriseAlarm/ping") {
-    mqtt.publish("sunriseAlarm/pong", displayTime.getTime());
+    mqtt.publish("sunriseAlarm/pong", displayTime.getTime(false));
   } else if (topic == "sunriseAlarm/restart") {
    ESP.restart();
   }
@@ -340,7 +334,7 @@ void setMode(Mode newMode) {
   } else if (newMode == MODE_SET_ALARM_TOGGLE) {
     showAlarmToggle();
   } else if (newMode == MODE_SET_LIGHT_SCENE) {
-    dotMatrix.showText(ledStrip.getCurrentLightScene().label);
+    dotMatrix.showText((char *)ledStrip.getCurrentLightScene().label.c_str());
   } 
   mode = newMode;
   dotMatrix.underlineHours(mode == MODE_SET_ALARM_HOURS);
@@ -397,9 +391,11 @@ void loop() {
       if (menu.getActiveMenuItem()["id"] == "Root") {
         setMode(MODE_CLOCK);
       } else {
-        String menuLabel = menu.getActiveMenuItem()["label"].as<String>();
+        char menuLabel[20];
         if (menu.getActiveMenuItem()["id"] == "Alarm") { 
-          menuLabel = displayTime.getAlarmText(0);
+          strncpy(menuLabel, displayTime.getAlarmText(0).c_str(), sizeof(menuLabel));
+        } else {
+          strncpy(menuLabel, menu.getActiveMenuItem()["label"], sizeof(menuLabel));
         }
         dotMatrix.showText(menuLabel);
       }
@@ -451,7 +447,7 @@ void loop() {
       dotMatrix.setAlarmDot(displayTime.getIsAlarmOn()); 
     } else if (mode == MODE_SET_LIGHT_SCENE) {
       ledStrip.setNextOrPreviousLightScene(rotaryPosition - lastRotaryPosition);
-      dotMatrix.showText(ledStrip.getCurrentLightScene().label);
+      dotMatrix.showText((char *)ledStrip.getCurrentLightScene().label.c_str());
       if (ledStrip.getCurrentLightScene().type == "fadeTo") {
         ledStrip.command("sunriseAlarm/fadeTo", ledStrip.getCurrentLightScene().hex + ",5");
       } else if (ledStrip.getCurrentLightScene().type == "picture") {
