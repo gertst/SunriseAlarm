@@ -58,9 +58,9 @@ char *DisplayTime::getTime(bool alarmIsOn)
         strcpy(alarmsSign, "|");
     }
     if (seconds() % 2) {
-        sprintf(time, "%i:%02d", hours(), minutes());
+        sprintf(time, "%i:%02i", hours(), minutes());
     } else {
-        sprintf(time, "%s%i %02d%s", alarmsSign, hours(), minutes(), alarmsSign);
+        sprintf(time, "%s%i %0id%s", alarmsSign, hours(), minutes(), alarmsSign);
     }
     if (minutes() < 10) {
         strcat(time, "0");
