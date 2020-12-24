@@ -49,26 +49,24 @@ void DisplayTime::setIsAlarmOn(bool value) {
     EEPROM.commit();
 }
 
-char *DisplayTime::getTime(bool alarmIsOn)
+char *DisplayTime::getTime(bool alarmIsGoingOff)
 {
     
     char time[9];
-    char alarmsSign[2] = "";
-    if (alarmIsOn) {
+    char alarmsSign[2] = " ";
+    char semicolon[2] = ":";
+
+    if (alarmIsGoingOff && millis() % 500 > 250) {
         strcpy(alarmsSign, "|");
     }
     if (seconds() % 2) {
-        sprintf(time, "%i:%02i", hours(), minutes());
-    } else {
-        sprintf(time, "%s%i %0id%s", alarmsSign, hours(), minutes(), alarmsSign);
+        strcpy(semicolon, " ");
     }
-    if (minutes() < 10) {
-        strcat(time, "0");
-    }
-    if (minutes() != lastMinutes) {
-        //mqtt.publish("sunriseAlarm/npt/time", time);
-        lastMinutes = minutes();
-    }
+    
+    sprintf(time, "%s%i%s%02i%s", alarmsSign, hours(), semicolon, minutes(), alarmsSign);
+
+    //sprintf(time, "%i:%02i", hours(), minutes());
+    
     return time;
 }
 
