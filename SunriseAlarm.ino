@@ -144,7 +144,7 @@ Mqtt mqtt;
 // DFPlayer dfPlayer(DFPlayer_RX_PIN, DFPlayer_TX_PIN);
 
 uint8_t intensity;
-float intensityIncrease = 10.0;
+float intensityIncrease = 0.0;
 
 void updateClock() {
   char *newTime = displayTime.getTime(mode == MODE_ALARM);
@@ -192,11 +192,11 @@ void updateLDR() {
   int ldrValue = analogRead(LDR_PIN); //0 - 1024
   int newIntensity = 1;
   if (ldrValue < 1023) {
-    newIntensity = mapFloat((float)ldrValue, 0.0, 1024.0, 15.0, intensityIncrease);
+    newIntensity = mapFloat((float)ldrValue, 0.0, 1024.0, 15.0, intensityIncrease) - 1;
   }
   
   //higher intensity when not idle for 30 secs
-  newIntensity = rotaryButton.getSecondsIdle() < 30 ? (newIntensity + 1) * 2  : newIntensity;
+  newIntensity = rotaryButton.getSecondsIdle() < 30 ? (newIntensity) * 2  : newIntensity;
   
   //keep into limits
   newIntensity = max(0, newIntensity);
@@ -204,7 +204,7 @@ void updateLDR() {
 
   if (intensity != newIntensity) {
     dotMatrix.setIntensity(newIntensity); //0 - 15
-    //mqtt.publish("sunriseAlarm/intensity", (String)newIntensity);
+    mqtt.publish("sunriseAlarm/intensity", (String)newIntensity);
     intensity = newIntensity;
   }
 
