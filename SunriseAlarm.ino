@@ -191,13 +191,12 @@ long mapFloat(float x, float in_min, float in_max, float out_min, float out_max)
 void updateLDR() {
   int ldrValue = analogRead(LDR_PIN); //0 - 1024
   int newIntensity = 1;
-  if (ldrValue < 1023) {
-    newIntensity = mapFloat((float)ldrValue, 0.0, 1024.0, 15.0, intensityIncrease) - 1;
-  }
+  newIntensity = mapFloat((float)ldrValue, 0.0, 1024.0, 15.0, intensityIncrease);
   
   //higher intensity when not idle for 30 secs
   newIntensity = rotaryButton.getSecondsIdle() < 30 ? (newIntensity) * 2  : newIntensity;
-  
+
+
   //keep into limits
   newIntensity = max(0, newIntensity);
   newIntensity = min(15, newIntensity);
