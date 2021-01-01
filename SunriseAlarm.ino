@@ -123,14 +123,15 @@ const char *password = "gertstogo1627";
 #define HARDWARE_TYPE MD_MAX72XX::DR1CR0RR0_HW
 
 
-int rotaryPosition = 0;
-int lastRotaryPosition = 0;
+uint32_t rotaryPosition = 0;
+uint32_t lastRotaryPosition = 0;
 Timer timerLDR;
 char lastTime[9] = "";
 Mode mode;
 Mode lastMode;
 uint8_t lastWifiStatus;
-int heapTrigger = millis() + 10000;
+uint32_t heapTrigger = millis() + 10000;
+uint32_t lightSceneTrigger = 0;
 
 // Instance of MCP23017 library
 Adafruit_MCP23017 pinExpander;
@@ -447,17 +448,25 @@ void loop() {
     } else if (mode == MODE_SET_LIGHT_SCENE) {
       ledStrip.setNextOrPreviousLightScene(rotaryPosition - lastRotaryPosition);
       dotMatrix.showText((char *)ledStrip.getCurrentLightScene().label.c_str());
-      if (ledStrip.getCurrentLightScene().type == "fadeTo") {
-        ledStrip.command("sunriseAlarm/fadeTo", ledStrip.getCurrentLightScene().hex + ",5");
-      } else if (ledStrip.getCurrentLightScene().type == "picture") {
-        mqtt.publish("sunriseAlarm/picture/get/" + ledStrip.getCurrentLightScene().label, "1");
-      }
+
+      lightSceneTrigger = millis() + 2000;
+
     } else {
       menu.rotateMenu(rotaryPosition - lastRotaryPosition);
     }
     lastRotaryPosition = rotaryPosition;
   }
-}
+
+  if (lightSceneTrigger > 0 && lightSceneTrigger < millis()) {
+    lightSceneTrigger = 0;
+    if (ledStrip.getCurrentLightScene().type == "fadeTo") {
+      ledStrip.command("sunriseAlarm/fadeTo", ledStrip.getCurrentLightScene().hex + ",5");
+    } else if (ledStrip.getCurrentLightScene().type == "picture") {
+      mqtt.publish("sunriseAlarm/picture/get/" + ledStrip.getCurrentLightScene().label, "1");
+    }
+  }
+
+}//end loop
 
 // void colorWipe(uint32_t color, int wait) {
 //   //for(int i=0; i<strip.numPixels(); i++) { // For each pixel in strip...
